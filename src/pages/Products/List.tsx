@@ -19,6 +19,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, EyeOutlined
 import { useProducts } from '../../hooks/useProducts';
 import type { Product, ProductFilters, ProductStatus } from '../../types';
 import ProductForm from './ProductForm';
+import { toNumber } from '../../utils/normalize';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -49,6 +50,7 @@ const ProductList: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [form] = Form.useForm();
   const [addProductLoading, setAddProductLoading] = useState(false);
+  const formatCurrency = (value: unknown) => `¥${toNumber(value).toFixed(2)}`;
 
   // 辅助函数：根据 id 获取分类名称
   const getCategoryName = (categoryId: number) => {
@@ -170,7 +172,7 @@ const ProductList: React.FC = () => {
       title: '价格',
       dataIndex: 'price',
       key: 'price',
-      render: (price: number) => `¥${price.toFixed(2)}`,
+      render: (price: number) => formatCurrency(price),
     },
     {
       title: '库存',
@@ -448,10 +450,10 @@ const ProductList: React.FC = () => {
                 {selectedProduct.size}
               </Descriptions.Item>
               <Descriptions.Item label="销售价格">
-                ¥{selectedProduct.price.toFixed(2)}
+                {formatCurrency(selectedProduct.price)}
               </Descriptions.Item>
               <Descriptions.Item label="成本价格">
-                ¥{selectedProduct.costPrice.toFixed(2)}
+                {formatCurrency(selectedProduct.costPrice)}
               </Descriptions.Item>
               <Descriptions.Item label="库存">
                 <Tag color={selectedProduct.stock > 50 ? 'green' : selectedProduct.stock > 10 ? 'orange' : 'red'}>

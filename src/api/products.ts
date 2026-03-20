@@ -1,5 +1,6 @@
 import { api } from './index';
 import type { Product, ProductCategory, ProductBrand, PaginatedResponse, ProductFilters } from '../types';
+import { normalizeProduct } from '../utils/normalize';
 
 export const productsApi = {
   // 获取商品列表
@@ -9,22 +10,61 @@ export const productsApi = {
       pageSize: params?.pageSize,
       ...(params?.filters || {}),
     };
-    return api.get<PaginatedResponse<Product>>('/products', { params: query });
+    const response = await api.get<PaginatedResponse<Product>>('/products', { params: query });
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          items: response.data.items.map(normalizeProduct),
+        },
+      };
+    }
+
+    return response;
   },
 
   // 获取商品详情
   getProduct: async (id: number) => {
-    return api.get<Product>(`/products/${id}`);
+    const response = await api.get<Product>(`/products/${id}`);
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: normalizeProduct(response.data),
+      };
+    }
+
+    return response;
   },
 
   // 创建商品
   createProduct: async (data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return api.post<Product>('/products', data);
+    const response = await api.post<Product>('/products', data);
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: normalizeProduct(response.data),
+      };
+    }
+
+    return response;
   },
 
   // 更新商品
   updateProduct: async (id: number, data: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>) => {
-    return api.put<Product>(`/products/${id}`, data);
+    const response = await api.put<Product>(`/products/${id}`, data);
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: normalizeProduct(response.data),
+      };
+    }
+
+    return response;
   },
 
   // 删除商品
@@ -74,6 +114,15 @@ export const productsApi = {
 
   // 更新库存
   updateStock: async (id: number, stock: number) => {
-    return api.patch<Product>(`/products/${id}/stock`, { stock });
+    const response = await api.patch<Product>(`/products/${id}/stock`, { stock });
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: normalizeProduct(response.data),
+      };
+    }
+
+    return response;
   },
 };
