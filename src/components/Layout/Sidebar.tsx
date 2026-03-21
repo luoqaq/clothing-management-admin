@@ -13,7 +13,7 @@ import type { MenuProps } from 'antd';
 const { Sider } = Layout;
 const { Text } = Typography;
 const BRAND_NAME = 'chuchu的橱窗';
-const BRAND_LOGO = 'https://product-image-1256374350.cos.ap-shanghai.myqcloud.com/assets/logo.jpg';
+const BRAND_LOGO = 'https://product-image-1256374350.cos.ap-shanghai.myqcloud.com/assets/logo.png';
 const BRAND_NOTE = 'Curated showroom admin';
 
 type MenuItem = Required<MenuProps>['items'][number];

@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 
 const { Title, Text } = Typography;
 const BRAND_NAME = 'chuchu的橱窗';
-const BRAND_LOGO = 'https://product-image-1256374350.cos.ap-shanghai.myqcloud.com/assets/logo.jpg';
+const BRAND_LOGO = 'https://product-image-1256374350.cos.ap-shanghai.myqcloud.com/assets/logo.png';
 const BRAND_POINTS = [
   '更克制的后台视觉，让商品与经营数据成为主角。',
   '米色与天蓝统一品牌氛围，兼顾轻奢感与可读性。',

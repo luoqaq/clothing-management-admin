@@ -189,23 +189,60 @@ const ProductList: React.FC = () => {
       render: (_: unknown, record: Product) => record.category?.name || '-',
     },
     {
-      title: '规格数',
-      dataIndex: 'specCount',
-      key: 'specCount',
-      minWidth: 110,
-      render: (value: number) => `${value} 个规格`,
+      title: '规格',
+      key: 'specifications',
+      minWidth: 220,
+      render: (_: unknown, record: Product) => {
+        if (record.specifications.length === 0) {
+          return <Text type="secondary">暂无规格</Text>;
+        }
+
+        const previewItems = record.specifications.slice(0, 2);
+
+        return (
+          <div>
+            {previewItems.map((item) => (
+              <div key={item.id} style={{ lineHeight: 1.6 }}>
+                {item.color} / {item.size} · 库存 {item.stock}
+              </div>
+            ))}
+            {record.specifications.length > previewItems.length ? (
+              <Text type="secondary">等 {record.specifications.length} 个规格</Text>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
-      title: '总库存',
-      dataIndex: 'totalStock',
-      key: 'totalStock',
-      minWidth: 100,
-    },
-    {
-      title: '售价范围',
-      key: 'priceRange',
-      minWidth: 160,
-      render: (_: unknown, record: Product) => `¥${record.minPrice.toFixed(2)} - ¥${record.maxPrice.toFixed(2)}`,
+      title: '售价',
+      key: 'prices',
+      minWidth: 220,
+      render: (_: unknown, record: Product) => {
+        if (record.specifications.length === 0) {
+          return <Text type="secondary">暂无售价</Text>;
+        }
+
+        const uniquePrices = Array.from(new Set(record.specifications.map((item) => item.salePrice)));
+
+        if (uniquePrices.length === 1) {
+          return `¥${uniquePrices[0].toFixed(2)}`;
+        }
+
+        const previewItems = record.specifications.slice(0, 2);
+
+        return (
+          <div>
+            {previewItems.map((item) => (
+              <div key={item.id} style={{ lineHeight: 1.6 }}>
+                {item.color} / {item.size} · ¥{item.salePrice.toFixed(2)}
+              </div>
+            ))}
+            {record.specifications.length > previewItems.length ? (
+              <Text type="secondary">等 {record.specifications.length} 个规格价格</Text>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       title: '状态',
@@ -320,56 +357,37 @@ const ProductList: React.FC = () => {
       <Modal open={viewModalVisible} title="商品详情" footer={null} onCancel={() => setViewModalVisible(false)} width={960}>
         {selectedProduct && (
           <div className="detail-sheet">
-            <Descriptions bordered column={2} className="detail-sheet__descriptions">
-              <Descriptions.Item label="商品名称">{selectedProduct.name}</Descriptions.Item>
-              <Descriptions.Item label="商品状态">
-                {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
-              </Descriptions.Item>
-              <Descriptions.Item label="分类">{selectedProduct.category?.name || '-'}</Descriptions.Item>
-              <Descriptions.Item label="品牌">{selectedProduct.brand?.name || '-'}</Descriptions.Item>
-              <Descriptions.Item label="规格数">{selectedProduct.specCount}</Descriptions.Item>
-              <Descriptions.Item label="总库存">{selectedProduct.totalStock}</Descriptions.Item>
-              <Descriptions.Item label="售价范围">{`¥${selectedProduct.minPrice.toFixed(2)} - ¥${selectedProduct.maxPrice.toFixed(2)}`}</Descriptions.Item>
-              <Descriptions.Item label="标签">{selectedProduct.tags.join('，') || '-'}</Descriptions.Item>
-              <Descriptions.Item label="描述" span={2}>{selectedProduct.description || '-'}</Descriptions.Item>
-            </Descriptions>
-            <div className="detail-sheet__section">
-              <Text className="detail-sheet__section-title">主图</Text>
-              <Space wrap size={12}>
-                {selectedProduct.mainImages.length > 0 ? (
-                  selectedProduct.mainImages.map((url, index) => (
+            <div className="detail-sheet__hero">
+              <div className="detail-sheet__section detail-sheet__section--sticky">
+                <Text className="detail-sheet__section-title">主图</Text>
+                <div className="detail-sheet__image-grid detail-sheet__image-grid--primary">
+                  {selectedProduct.mainImages[0] ? (
                     <Image
-                      key={`${url}-${index}`}
-                      src={url}
-                      width={120}
-                      height={120}
-                      style={{ objectFit: 'cover', borderRadius: 8 }}
-                      preview={{ src: url }}
+                      src={selectedProduct.mainImages[0]}
+                      width={132}
+                      height={132}
+                      style={{ objectFit: 'cover', borderRadius: 10 }}
+                      preview={{ src: selectedProduct.mainImages[0] }}
                     />
-                  ))
-                ) : (
-                  <Text className="detail-sheet__empty-text">暂无主图</Text>
-                )}
-              </Space>
-            </div>
-            <div className="detail-sheet__section">
-              <Text className="detail-sheet__section-title">详情图</Text>
-              <Space wrap size={12}>
-                {selectedProduct.detailImages.length > 0 ? (
-                  selectedProduct.detailImages.map((url, index) => (
-                    <Image
-                      key={`${url}-${index}`}
-                      src={url}
-                      width={120}
-                      height={120}
-                      style={{ objectFit: 'cover', borderRadius: 8 }}
-                      preview={{ src: url }}
-                    />
-                  ))
-                ) : (
-                  <Text className="detail-sheet__empty-text">暂无详情图</Text>
-                )}
-              </Space>
+                  ) : (
+                    <Text className="detail-sheet__empty-text">暂无主图</Text>
+                  )}
+                </div>
+              </div>
+
+              <Descriptions bordered column={2} className="detail-sheet__descriptions">
+                <Descriptions.Item label="商品名称">{selectedProduct.name}</Descriptions.Item>
+                <Descriptions.Item label="商品状态">
+                  {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
+                </Descriptions.Item>
+                <Descriptions.Item label="分类">{selectedProduct.category?.name || '-'}</Descriptions.Item>
+                <Descriptions.Item label="品牌">{selectedProduct.brand?.name || '-'}</Descriptions.Item>
+                <Descriptions.Item label="规格数">{selectedProduct.specCount}</Descriptions.Item>
+                <Descriptions.Item label="总库存">{selectedProduct.totalStock}</Descriptions.Item>
+                <Descriptions.Item label="售价范围">{`¥${selectedProduct.minPrice.toFixed(2)} - ¥${selectedProduct.maxPrice.toFixed(2)}`}</Descriptions.Item>
+                <Descriptions.Item label="标签">{selectedProduct.tags.join('，') || '-'}</Descriptions.Item>
+                <Descriptions.Item label="描述" span={2}>{selectedProduct.description || '-'}</Descriptions.Item>
+              </Descriptions>
             </div>
             <Table
               className="content-table"
@@ -398,6 +416,25 @@ const ProductList: React.FC = () => {
                 },
               ]}
             />
+            <div className="detail-sheet__section">
+              <Text className="detail-sheet__section-title">详情图</Text>
+              <div className="detail-sheet__image-grid">
+                {selectedProduct.detailImages.length > 0 ? (
+                  selectedProduct.detailImages.map((url, index) => (
+                    <Image
+                      key={`${url}-${index}`}
+                      src={url}
+                      width={120}
+                      height={120}
+                      style={{ objectFit: 'cover', borderRadius: 8 }}
+                      preview={{ src: url }}
+                    />
+                  ))
+                ) : (
+                  <Text className="detail-sheet__empty-text">暂无详情图</Text>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </Modal>

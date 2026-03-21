@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Col, Divider, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductBrand, ProductCategory } from '../../types';
 import ImageUploadField from '../../components/ImageUploadField';
 
 const { Title, Text } = Typography;
+const SIZE_OPTIONS = [
+  { label: 'XS', value: 'XS' },
+  { label: 'S', value: 'S' },
+  { label: 'M', value: 'M' },
+  { label: 'L', value: 'L' },
+  { label: 'XL', value: 'XL' },
+  { label: 'XXL', value: 'XXL' },
+  { label: 'F / 均码', value: 'F' },
+];
 
 interface ProductFormProps {
   categories: ProductCategory[];
@@ -36,7 +45,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           {
             skuCode: '',
             color: '',
-            size: '',
+            size: 'F',
             salePrice: 0,
             costPrice: 0,
             stock: 0,
@@ -53,7 +62,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       categoryId: product.categoryId,
       brandId: product.brandId ?? undefined,
       status: product.status,
-      mainImages: product.mainImages,
+      mainImages: product.mainImages.slice(0, 1),
       detailImages: product.detailImages,
       tags: product.tags.join(','),
       specifications: product.specifications.map((item) => ({
@@ -81,7 +90,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       description: values.description,
       categoryId: values.categoryId,
       brandId: values.brandId ?? null,
-      mainImages: Array.isArray(values.mainImages) ? values.mainImages : [],
+      mainImages: Array.isArray(values.mainImages) ? values.mainImages.slice(0, 1) : [],
       detailImages: Array.isArray(values.detailImages) ? values.detailImages : [],
       tags: values.tags
         ? String(values.tags)
@@ -94,7 +103,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         id: product?.specifications[index]?.id ?? 0,
         productId: product?.id ?? 0,
         skuCode: item.skuCode,
-        barcode: item.barcode || null,
+        barcode: item.barcode ? String(item.barcode).trim() : undefined,
         color: item.color,
         size: item.size,
         salePrice: item.salePrice,
@@ -117,6 +126,23 @@ const ProductForm: React.FC<ProductFormProps> = ({
     });
   };
 
+  const handleAddSpecification = (add: (defaultValue?: any, insertIndex?: number) => void) => {
+    const specifications = form.getFieldValue('specifications');
+    const previousSpec = Array.isArray(specifications) ? specifications[specifications.length - 1] : undefined;
+
+    add({
+      skuCode: previousSpec?.skuCode ?? '',
+      barcode: previousSpec?.barcode ?? '',
+      color: previousSpec?.color ?? '',
+      size: previousSpec?.size ?? 'F',
+      salePrice: previousSpec?.salePrice ?? 0,
+      costPrice: previousSpec?.costPrice ?? 0,
+      stock: 0,
+      reservedStock: 0,
+      status: previousSpec?.status ?? 'active',
+    });
+  };
+
   return (
     <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
       <Card className="form-panel">
@@ -128,74 +154,76 @@ const ProductForm: React.FC<ProductFormProps> = ({
             </Title>
           </div>
         </div>
-        <Row gutter={[16, 0]}>
-          <Col xs={24}>
-            <Form.Item name="name" label="商品名称" rules={[{ required: true, message: '请输入商品名称' }]}>
-              <Input placeholder="例如：基础圆领T恤" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            <Form.Item
-              name="categoryId"
-              label="商品分类"
-              rules={[{ required: true, message: '请选择商品分类' }]}
-            >
-              <Select placeholder="选择分类" options={categories.map((item) => ({ label: item.name, value: item.id }))} />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            <Form.Item name="brandId" label="品牌">
-              <Select
-                allowClear
-                placeholder="选择品牌"
-                options={brands.map((item) => ({ label: item.name, value: item.id }))}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            <Form.Item
-              name="status"
-              label="商品状态"
-              rules={[{ required: true, message: '请选择商品状态' }]}
-            >
-              <Select
-                options={[
-                  { label: '草稿', value: 'draft' },
-                  { label: '上架中', value: 'active' },
-                  { label: '已下架', value: 'inactive' },
-                ]}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24}>
-            <Form.Item name="description" label="商品描述">
-              <Input.TextArea rows={4} placeholder="补充商品卖点、材质或适用场景" />
-            </Form.Item>
-          </Col>
-          <Col xs={24}>
-            <Form.Item name="tags" label="标签">
-              <Input placeholder="例如：基础款, 百搭, 春夏" />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
+        <div className="product-form__hero">
+          <div className="product-form__hero-main">
+            <Row gutter={[16, 0]}>
+              <Col xs={24}>
+                <Form.Item name="name" label="商品名称" rules={[{ required: true, message: '请输入商品名称' }]}>
+                  <Input placeholder="例如：基础圆领T恤" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item
+                  name="categoryId"
+                  label="商品分类"
+                  rules={[{ required: true, message: '请选择商品分类' }]}
+                >
+                  <Select className="product-form__select" placeholder="选择分类" options={categories.map((item) => ({ label: item.name, value: item.id }))} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name="brandId" label="品牌">
+                  <Select
+                    className="product-form__select"
+                    allowClear
+                    placeholder="选择品牌"
+                    options={brands.map((item) => ({ label: item.name, value: item.id }))}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item
+                  name="status"
+                  label="商品状态"
+                  rules={[{ required: true, message: '请选择商品状态' }]}
+                >
+                  <Select
+                    className="product-form__select"
+                    options={[
+                      { label: '草稿', value: 'draft' },
+                      { label: '上架中', value: 'active' },
+                      { label: '已下架', value: 'inactive' },
+                    ]}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24}>
+                <Form.Item name="description" label="商品描述">
+                  <Input.TextArea rows={4} placeholder="补充商品卖点、材质或适用场景" />
+                </Form.Item>
+              </Col>
+              <Col xs={24}>
+                <Form.Item name="tags" label="标签">
+                  <Input placeholder="例如：基础款, 百搭, 春夏" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-      <Card className="form-panel">
-        <div className="form-panel__header">
-          <div>
-            <Text className="form-panel__eyebrow">Assets</Text>
-            <Title level={4} className="form-panel__title">
-              图片与展示素材
-            </Title>
+          <div className="product-form__hero-side">
+            <div className="product-form__media-panel">
+              <div className="product-form__media-header">
+                <Text className="form-panel__eyebrow">Assets</Text>
+                <Title level={5} className="product-form__media-title">
+                  主图
+                </Title>
+              </div>
+              <Form.Item name="mainImages" label="商品主图（仅 1 张）" className="form-panel__field-last product-form__media-field">
+                <ImageUploadField scene="main" maxCount={1} onUploadingChange={setIsMainImagesUploading} />
+              </Form.Item>
+            </div>
           </div>
         </div>
-        <Form.Item name="mainImages" label="主图">
-          <ImageUploadField scene="main" maxCount={5} onUploadingChange={setIsMainImagesUploading} />
-        </Form.Item>
-        <Divider />
-        <Form.Item name="detailImages" label="详情图">
-          <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
-        </Form.Item>
       </Card>
 
       <Card className="form-panel">
@@ -244,7 +272,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       </Col>
                       <Col xs={24} md={8}>
                         <Form.Item {...restField} name={[name, 'size']} label="尺码" rules={[{ required: true }]}>
-                          <Input placeholder="M" />
+                          <Select className="product-form__select" placeholder="选择尺码" options={SIZE_OPTIONS} />
                         </Form.Item>
                       </Col>
                       <Col xs={24} md={6}>
@@ -265,6 +293,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       <Col xs={24} md={6}>
                         <Form.Item {...restField} name={[name, 'status']} label="状态" initialValue="active">
                           <Select
+                            className="product-form__select"
                             options={[
                               { label: '启用', value: 'active' },
                               { label: '停用', value: 'inactive' },
@@ -276,12 +305,31 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   </Card>
                 ))}
               </div>
-              <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+              <Button
+                type="dashed"
+                onClick={() => handleAddSpecification(add)}
+                block
+                icon={<PlusOutlined />}
+              >
                 添加规格
               </Button>
             </>
           )}
         </Form.List>
+      </Card>
+
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Assets</Text>
+            <Title level={4} className="form-panel__title">
+              详情图
+            </Title>
+          </div>
+        </div>
+        <Form.Item name="detailImages" label="详情展示图" className="form-panel__field-last">
+          <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
+        </Form.Item>
       </Card>
 
       <Form.Item className="form-actions">

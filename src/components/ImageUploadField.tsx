@@ -176,7 +176,7 @@ export default function ImageUploadField({
         beforeUpload={handleBeforeUpload}
         onRemove={handleRemove}
         onPreview={handlePreview}
-        multiple
+        multiple={maxCount > 1}
       >
         {fileList.length >= maxCount ? null : (
           <div className="brand-upload__trigger">
@@ -187,7 +187,7 @@ export default function ImageUploadField({
           </div>
         )}
       </Upload>
-      {value.length > 0 ? (
+      {value.length > 0 && maxCount > 1 ? (
         <div className="brand-upload__gallery">
           <Typography.Text className="brand-upload__gallery-title">已上传图片顺序</Typography.Text>
           <Flex wrap gap={12} style={{ marginTop: 8 }}>
