@@ -17,7 +17,7 @@ import {
   message,
 } from 'antd';
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons';
-import type { Order, OrderAddress, Product, ProductSpecification } from '../../types';
+import type { Order, Product, ProductSpecification } from '../../types';
 import { useProducts } from '../../hooks/useProducts';
 
 const { Title, Text } = Typography;
@@ -28,6 +28,7 @@ interface CartItem {
   productId: number;
   skuId: number;
   productName: string;
+  productCode: string;
   skuCode: string;
   image?: string | null;
   color: string;
@@ -59,7 +60,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
     const rows: Array<CartItem & { categoryId: number; categoryName: string }> = [];
 
     products.forEach((product: Product) => {
-      if (searchText && !product.name.toLowerCase().includes(searchText.toLowerCase())) {
+      const normalizedSearchText = searchText.trim().toLowerCase();
+      if (
+        normalizedSearchText &&
+        !product.name.toLowerCase().includes(normalizedSearchText) &&
+        !product.productCode.toLowerCase().includes(normalizedSearchText)
+      ) {
         return;
       }
       if (categoryId && product.categoryId !== categoryId) {
@@ -71,6 +77,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           productId: product.id,
           skuId: specification.id,
           productName: product.name,
+          productCode: product.productCode,
           skuCode: specification.skuCode,
           image: product.mainImages[0] ?? null,
           color: specification.color,
@@ -119,20 +126,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
       return;
     }
 
-    const address: OrderAddress = {
-      name: values.addressName,
-      phone: values.addressPhone,
-      province: values.province,
-      city: values.city,
-      district: values.district,
-      detail: values.addressDetail,
-      postalCode: values.postalCode,
-    };
-
     await onSubmit({
-      customerName: values.customerName,
-      customerPhone: values.customerPhone,
-      customerEmail: values.customerEmail,
+      customerName: values.customerName ? String(values.customerName).trim() : '',
+      customerPhone: values.customerPhone ? String(values.customerPhone).trim() : '',
+      customerEmail: values.customerEmail ? String(values.customerEmail).trim() : undefined,
       items: cartItems.map((item) => ({
         id: 0,
         productId: item.productId,
@@ -148,106 +145,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
       totalAmount,
       discountAmount,
       finalAmount,
-      status: 'pending',
-      address,
+      status: 'confirmed',
+      address: {},
       note: values.note,
       paymentMethod: values.paymentMethod,
-      paymentStatus: values.paymentStatus,
+      paymentStatus: 'paid',
     });
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ discountAmount: 0, paymentStatus: 'paid' }} className="editor-form">
-      <Card className="form-panel">
-        <div className="form-panel__header">
-          <div>
-            <Text className="form-panel__eyebrow">Customer</Text>
-            <Title level={4} className="form-panel__title">
-              客户信息
-            </Title>
-          </div>
-        </div>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item name="customerName" label="客户姓名" rules={[{ required: true, message: '请输入客户姓名' }]}>
-              <Input placeholder="请输入客户姓名" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="customerPhone"
-              label="联系电话"
-              rules={[
-                { required: true, message: '请输入联系电话' },
-                { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' },
-              ]}
-            >
-              <Input placeholder="请输入联系电话" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="customerEmail" label="电子邮箱" rules={[{ type: 'email', message: '请输入正确邮箱格式' }]}>
-              <Input placeholder="请输入电子邮箱" />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
-      <Card className="form-panel">
-        <div className="form-panel__header">
-          <div>
-            <Text className="form-panel__eyebrow">Address</Text>
-            <Title level={4} className="form-panel__title">
-              收货地址
-            </Title>
-          </div>
-        </div>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="addressName" label="收货人" rules={[{ required: true, message: '请输入收货人姓名' }]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="addressPhone"
-              label="联系电话"
-              rules={[
-                { required: true, message: '请输入联系电话' },
-                { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="province" label="省份" rules={[{ required: true, message: '请输入省份' }]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="city" label="城市" rules={[{ required: true, message: '请输入城市' }]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="district" label="区/县" rules={[{ required: true, message: '请输入区/县' }]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={18}>
-            <Form.Item name="addressDetail" label="详细地址" rules={[{ required: true, message: '请输入详细地址' }]}>
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item name="postalCode" label="邮政编码">
-              <Input />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
-
+    <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ discountAmount: 0 }} className="editor-form">
       <Card className="form-panel">
         <div className="form-panel__header">
           <div>
@@ -351,21 +258,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           <Col span={8}>
             <Form.Item name="paymentMethod" label="支付方式">
               <Select
+                className="order-form__select"
                 allowClear
                 options={[
                   { label: '支付宝', value: 'alipay' },
                   { label: '微信支付', value: 'wechat' },
                   { label: '银行卡', value: 'card' },
-                ]}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="paymentStatus" label="支付状态">
-              <Select
-                options={[
-                  { label: '已支付', value: 'paid' },
-                  { label: '待支付', value: 'unpaid' },
                 ]}
               />
             </Form.Item>
@@ -377,12 +275,49 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           </Col>
         </Row>
         <Form.Item name="note" label="备注">
-          <Input.TextArea rows={3} />
+          <Input.TextArea rows={3} placeholder="记录门店订单说明、到店时间、售后备注等" />
         </Form.Item>
         <div className="order-summary">
           <Text className="order-summary__label">应收金额</Text>
           <Text className="order-summary__value">¥{finalAmount.toFixed(2)}</Text>
         </div>
+      </Card>
+
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Customer</Text>
+            <Title level={4} className="form-panel__title">
+              客户信息
+            </Title>
+          </div>
+        </div>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item name="customerName" label="客户姓名">
+              <Input placeholder="选填" />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="customerPhone"
+              label="联系电话"
+              rules={[
+                {
+                  pattern: /^$|^1[3-9]\d{9}$/,
+                  message: '请输入正确的手机号',
+                },
+              ]}
+            >
+              <Input placeholder="选填" />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="customerEmail" label="电子邮箱" rules={[{ type: 'email', message: '请输入正确邮箱格式' }]}>
+              <Input placeholder="选填" />
+            </Form.Item>
+          </Col>
+        </Row>
       </Card>
 
       <div className="form-actions">
@@ -404,7 +339,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
       >
         <div className="filter-toolbar">
           <Input
-            placeholder="搜索商品名称"
+            placeholder="搜索商品名称/款号"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             className="filter-toolbar__search"
@@ -430,7 +365,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
               render: (_, item: CartItem & { categoryName: string }) => (
                 <div>
                   <div style={{ fontWeight: 600 }}>{item.productName}</div>
-                  <div style={{ color: '#8c8c8c' }}>{item.categoryName}</div>
+                  <div style={{ color: '#8c8c8c' }}>{item.productCode} · {item.categoryName}</div>
                 </div>
               ),
             },

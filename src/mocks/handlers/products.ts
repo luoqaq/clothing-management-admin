@@ -19,7 +19,8 @@ export const productsHandlers = [
     if (search) {
       filteredProducts = filteredProducts.filter(
         (product) =>
-          product.name.toLowerCase().includes(search.toLowerCase())
+          product.name.toLowerCase().includes(search.toLowerCase()) ||
+          product.productCode.toLowerCase().includes(search.toLowerCase())
       );
     }
 

@@ -55,6 +55,7 @@ export interface ProductSpecification {
 
 export interface Product {
   id: number;
+  productCode: string;
   name: string;
   description?: string | null;
   categoryId: number;
@@ -116,12 +117,12 @@ export interface OrderItem {
 }
 
 export interface OrderAddress {
-  name: string;
-  phone: string;
-  province: string;
-  city: string;
-  district: string;
-  detail: string;
+  name?: string;
+  phone?: string;
+  province?: string;
+  city?: string;
+  district?: string;
+  detail?: string;
   postalCode?: string;
 }
 
@@ -136,7 +137,7 @@ export interface Order {
   discountAmount?: number;
   finalAmount: number;
   status: OrderStatus;
-  address: OrderAddress;
+  address?: OrderAddress | null;
   note?: string;
   paymentMethod?: string;
   paymentStatus: 'unpaid' | 'paid' | 'refunded';

@@ -171,6 +171,12 @@ const ProductList: React.FC = () => {
       },
     },
     {
+      title: '款号',
+      dataIndex: 'productCode',
+      key: 'productCode',
+      minWidth: 140,
+    },
+    {
       title: '商品',
       key: 'product',
       minWidth: 220,
@@ -300,7 +306,7 @@ const ProductList: React.FC = () => {
 
         <div className="filter-toolbar">
           <Input
-            placeholder="搜索商品名称"
+            placeholder="搜索商品名称/款号"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onPressEnter={handleSearch}
@@ -377,6 +383,7 @@ const ProductList: React.FC = () => {
 
               <Descriptions bordered column={2} className="detail-sheet__descriptions">
                 <Descriptions.Item label="商品名称">{selectedProduct.name}</Descriptions.Item>
+                <Descriptions.Item label="款号">{selectedProduct.productCode}</Descriptions.Item>
                 <Descriptions.Item label="商品状态">
                   {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
                 </Descriptions.Item>

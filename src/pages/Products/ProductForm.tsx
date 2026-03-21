@@ -24,6 +24,11 @@ interface ProductFormProps {
   product?: Product;
 }
 
+function buildSkuCode(productCode?: string, size?: string, color?: string): string {
+  const parts = [productCode, size, color].map((item) => String(item ?? '').trim()).filter(Boolean);
+  return parts.join('-');
+}
+
 const ProductForm: React.FC<ProductFormProps> = ({
   categories,
   brands,
@@ -40,10 +45,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
     if (!product) {
       form.resetFields();
       form.setFieldsValue({
+        productCode: '',
         status: 'draft',
         specifications: [
           {
-            skuCode: '',
             color: '',
             size: 'F',
             salePrice: 0,
@@ -57,6 +62,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     form.setFieldsValue({
+      productCode: product.productCode,
       name: product.name,
       description: product.description,
       categoryId: product.categoryId,
@@ -66,7 +72,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       detailImages: product.detailImages,
       tags: product.tags.join(','),
       specifications: product.specifications.map((item) => ({
-        skuCode: item.skuCode,
         barcode: item.barcode ?? '',
         color: item.color,
         size: item.size,
@@ -86,6 +91,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     await onSubmit({
+      productCode: String(values.productCode).trim(),
       name: values.name,
       description: values.description,
       categoryId: values.categoryId,
@@ -102,7 +108,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       specifications: values.specifications.map((item: any, index: number) => ({
         id: product?.specifications[index]?.id ?? 0,
         productId: product?.id ?? 0,
-        skuCode: item.skuCode,
+        skuCode: buildSkuCode(values.productCode, item.size, item.color),
         barcode: item.barcode ? String(item.barcode).trim() : undefined,
         color: item.color,
         size: item.size,
@@ -131,7 +137,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
     const previousSpec = Array.isArray(specifications) ? specifications[specifications.length - 1] : undefined;
 
     add({
-      skuCode: previousSpec?.skuCode ?? '',
       barcode: previousSpec?.barcode ?? '',
       color: previousSpec?.color ?? '',
       size: previousSpec?.size ?? 'F',
@@ -157,6 +162,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
         <div className="product-form__hero">
           <div className="product-form__hero-main">
             <Row gutter={[16, 0]}>
+              <Col xs={24}>
+                <Form.Item
+                  name="productCode"
+                  label="款号"
+                  rules={[{ required: true, message: '请输入款号' }]}
+                >
+                  <Input placeholder="例如：TOP001" />
+                </Form.Item>
+              </Col>
               <Col xs={24}>
                 <Form.Item name="name" label="商品名称" rules={[{ required: true, message: '请输入商品名称' }]}>
                   <Input placeholder="例如：基础圆领T恤" />
@@ -256,16 +270,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     </div>
                     <Row gutter={[16, 0]}>
                       <Col xs={24} md={8}>
-                        <Form.Item
-                          {...restField}
-                          name={[name, 'skuCode']}
-                          label="规格编码"
-                          rules={[{ required: true, message: '请输入规格编码' }]}
-                        >
-                          <Input placeholder="SKU-001" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={8}>
                         <Form.Item {...restField} name={[name, 'color']} label="颜色" rules={[{ required: true }]}>
                           <Input placeholder="白色" />
                         </Form.Item>
@@ -273,6 +277,23 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       <Col xs={24} md={8}>
                         <Form.Item {...restField} name={[name, 'size']} label="尺码" rules={[{ required: true }]}>
                           <Select className="product-form__select" placeholder="选择尺码" options={SIZE_OPTIONS} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24}>
+                        <Form.Item label="规格编码">
+                          <Form.Item noStyle shouldUpdate>
+                            {() => {
+                              const productCode = form.getFieldValue('productCode');
+                              const specification = form.getFieldValue(['specifications', name]) || {};
+                              return (
+                                <Input
+                                  value={buildSkuCode(productCode, specification.size, specification.color)}
+                                  placeholder="保存后自动按 款号-尺码-颜色 生成"
+                                  disabled
+                                />
+                              );
+                            }}
+                          </Form.Item>
                         </Form.Item>
                       </Col>
                       <Col xs={24} md={6}>

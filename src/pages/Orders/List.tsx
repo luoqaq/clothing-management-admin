@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Descriptions, Form, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Descriptions, Form, Input, Modal, Table, Tag, Typography, message } from 'antd';
 import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
@@ -7,6 +7,15 @@ import { useOrders } from '../../hooks/useOrders';
 import OrderForm from './OrderForm';
 
 const { Title, Text } = Typography;
+
+const orderStatusMap: Record<OrderStatus, { text: string; color: string }> = {
+  pending: { text: '待确认', color: 'gold' },
+  confirmed: { text: '已确认', color: 'blue' },
+  shipped: { text: '已发货', color: 'cyan' },
+  delivered: { text: '已完成', color: 'green' },
+  cancelled: { text: '已取消', color: 'default' },
+  refunded: { text: '已退款', color: 'magenta' },
+};
 
 const OrderList: React.FC = () => {
   const {
@@ -19,22 +28,17 @@ const OrderList: React.FC = () => {
     getOrderById,
     updateOrderStatus,
     cancelOrder,
-    shipOrder,
     refundOrder,
     addOrder,
   } = useOrders();
 
   const [searchText, setSearchText] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | undefined>();
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string | undefined>();
   const [detailVisible, setDetailVisible] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
-  const [shipVisible, setShipVisible] = useState(false);
   const [refundVisible, setRefundVisible] = useState(false);
   const [cancelVisible, setCancelVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [shipForm] = Form.useForm();
   const [refundForm] = Form.useForm();
   const [cancelForm] = Form.useForm();
 
@@ -51,16 +55,12 @@ const OrderList: React.FC = () => {
       pageSize: 10,
       filters: {
         search: searchText || undefined,
-        status: selectedStatus,
-        paymentStatus: selectedPaymentStatus,
       },
     });
   };
 
   const handleReset = () => {
     setSearchText('');
-    setSelectedStatus(undefined);
-    setSelectedPaymentStatus(undefined);
     void reload({ page: 1, pageSize: 10, filters: {} });
   };
 
@@ -85,12 +85,6 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const openShipModal = (order: Order) => {
-    setSelectedOrder(order);
-    shipForm.setFieldsValue({ shippingCompany: order.shippingCompany, trackingNumber: order.trackingNumber });
-    setShipVisible(true);
-  };
-
   const openRefundModal = (order: Order) => {
     setSelectedOrder(order);
     refundForm.setFieldsValue({ amount: order.finalAmount, reason: order.refundReason });
@@ -101,17 +95,6 @@ const OrderList: React.FC = () => {
     setSelectedOrder(order);
     cancelForm.setFieldsValue({ reason: order.cancelReason });
     setCancelVisible(true);
-  };
-
-  const submitShip = async () => {
-    if (!selectedOrder) return;
-    const values = await shipForm.validateFields();
-    const result = await shipOrder(selectedOrder.id, values);
-    if (result) {
-      message.success('订单已发货');
-      setShipVisible(false);
-      void reload();
-    }
   };
 
   const submitRefund = async () => {
@@ -150,8 +133,8 @@ const OrderList: React.FC = () => {
       minWidth: 160,
       render: (_: unknown, record: Order) => (
         <div>
-          <div>{record.customerName}</div>
-          <div style={{ color: '#8c8c8c' }}>{record.customerPhone}</div>
+          <div>{record.customerName || '-'}</div>
+          <div style={{ color: '#8c8c8c' }}>{record.customerPhone || '-'}</div>
         </div>
       ),
     },
@@ -182,23 +165,9 @@ const OrderList: React.FC = () => {
       key: 'status',
       minWidth: 120,
       render: (status: OrderStatus) => {
-        const mapping: Record<OrderStatus, { text: string; color: string }> = {
-          pending: { text: '待处理', color: 'orange' },
-          confirmed: { text: '已确认', color: 'blue' },
-          shipped: { text: '已发货', color: 'cyan' },
-          delivered: { text: '已送达', color: 'green' },
-          cancelled: { text: '已取消', color: 'default' },
-          refunded: { text: '已退款', color: 'red' },
-        };
-        return <Tag color={mapping[status].color}>{mapping[status].text}</Tag>;
+        const meta = orderStatusMap[status];
+        return <Tag color={meta.color}>{meta.text}</Tag>;
       },
-    },
-    {
-      title: '支付状态',
-      dataIndex: 'paymentStatus',
-      key: 'paymentStatus',
-      minWidth: 120,
-      render: (status: string) => <Tag color={status === 'paid' ? 'green' : status === 'refunded' ? 'red' : 'orange'}>{status === 'paid' ? '已支付' : status === 'refunded' ? '已退款' : '待支付'}</Tag>,
     },
     {
       title: '下单时间',
@@ -223,17 +192,12 @@ const OrderList: React.FC = () => {
               确认
             </Button>
           )}
-          {record.status === 'confirmed' && (
-            <Button type="text" icon={<CheckOutlined />} onClick={() => openShipModal(record)}>
-              发货
-            </Button>
-          )}
           {(record.status === 'pending' || record.status === 'confirmed') && (
             <Button type="text" danger icon={<CloseOutlined />} onClick={() => openCancelModal(record)}>
               取消
             </Button>
           )}
-          {(record.status === 'shipped' || record.status === 'delivered') && record.paymentStatus === 'paid' && (
+          {record.status === 'confirmed' && record.paymentStatus === 'paid' && (
             <Button type="text" danger icon={<DollarOutlined />} onClick={() => openRefundModal(record)}>
               退款
             </Button>
@@ -248,7 +212,7 @@ const OrderList: React.FC = () => {
       <Card className="content-panel">
         <div className="content-panel__header">
           <div>
-            <Text className="content-panel__eyebrow">Fulfillment</Text>
+            <Text className="content-panel__eyebrow">Store orders</Text>
             <Title level={4} className="content-panel__title">
               订单管理
             </Title>
@@ -265,33 +229,6 @@ const OrderList: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             onPressEnter={handleSearch}
             className="filter-toolbar__search"
-          />
-          <Select
-            allowClear
-            placeholder="订单状态"
-            className="filter-toolbar__select"
-            value={selectedStatus}
-            onChange={setSelectedStatus}
-            options={[
-              { label: '待处理', value: 'pending' },
-              { label: '已确认', value: 'confirmed' },
-              { label: '已发货', value: 'shipped' },
-              { label: '已送达', value: 'delivered' },
-              { label: '已取消', value: 'cancelled' },
-              { label: '已退款', value: 'refunded' },
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="支付状态"
-            className="filter-toolbar__select"
-            value={selectedPaymentStatus}
-            onChange={setSelectedPaymentStatus}
-            options={[
-              { label: '待支付', value: 'unpaid' },
-              { label: '已支付', value: 'paid' },
-              { label: '已退款', value: 'refunded' },
-            ]}
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
@@ -322,16 +259,11 @@ const OrderList: React.FC = () => {
           <div className="detail-sheet">
             <Descriptions bordered column={2} className="detail-sheet__descriptions">
               <Descriptions.Item label="订单号">{currentOrder.orderNo}</Descriptions.Item>
-              <Descriptions.Item label="订单状态">{currentOrder.status}</Descriptions.Item>
-              <Descriptions.Item label="客户姓名">{currentOrder.customerName}</Descriptions.Item>
-              <Descriptions.Item label="联系电话">{currentOrder.customerPhone}</Descriptions.Item>
+              <Descriptions.Item label="客户姓名">{currentOrder.customerName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="联系电话">{currentOrder.customerPhone || '-'}</Descriptions.Item>
               <Descriptions.Item label="支付方式">{currentOrder.paymentMethod || '-'}</Descriptions.Item>
-              <Descriptions.Item label="支付状态">{currentOrder.paymentStatus}</Descriptions.Item>
-              <Descriptions.Item label="物流公司">{currentOrder.shippingCompany || '-'}</Descriptions.Item>
-              <Descriptions.Item label="运单号">{currentOrder.trackingNumber || '-'}</Descriptions.Item>
-              <Descriptions.Item label="收货地址" span={2}>
-                {`${currentOrder.address.province}${currentOrder.address.city}${currentOrder.address.district}${currentOrder.address.detail}`}
-              </Descriptions.Item>
+              <Descriptions.Item label="下单时间">{dayjs(currentOrder.createdAt).format('YYYY-MM-DD HH:mm')}</Descriptions.Item>
+              <Descriptions.Item label="备注" span={2}>{currentOrder.note || '-'}</Descriptions.Item>
             </Descriptions>
             <Table
               className="content-table"
@@ -350,17 +282,6 @@ const OrderList: React.FC = () => {
             />
           </div>
         )}
-      </Modal>
-
-      <Modal open={shipVisible} title="订单发货" onOk={() => void submitShip()} onCancel={() => setShipVisible(false)}>
-        <Form form={shipForm} layout="vertical">
-          <Form.Item name="shippingCompany" label="物流公司" rules={[{ required: true, message: '请输入物流公司' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="trackingNumber" label="运单号" rules={[{ required: true, message: '请输入运单号' }]}>
-            <Input />
-          </Form.Item>
-        </Form>
       </Modal>
 
       <Modal open={refundVisible} title="订单退款" onOk={() => void submitRefund()} onCancel={() => setRefundVisible(false)}>
