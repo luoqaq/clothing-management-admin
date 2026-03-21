@@ -557,17 +557,49 @@ img {
 }
 
 .content-tabs > .ant-tabs-nav {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+}
+
+.content-tabs > .ant-tabs-nav::before {
+  border-bottom-color: rgba(176, 157, 138, 0.18) !important;
+}
+
+.content-tabs > .ant-tabs-nav .ant-tabs-nav-wrap {
+  gap: 8px;
 }
 
 .content-tabs > .ant-tabs-nav .ant-tabs-tab {
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: rgba(255, 251, 245, 0.72);
+  margin: 0 !important;
+  padding: 12px 18px 14px;
+  border-radius: 14px 14px 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .content-tabs > .ant-tabs-nav .ant-tabs-tab-active {
-  background: rgba(232, 241, 248, 0.92);
+  background: rgba(232, 241, 248, 0.42);
+}
+
+.content-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  color: inherit;
+}
+
+.content-tabs > .ant-tabs-nav .ant-tabs-tab:hover {
+  color: var(--accent-blue-deep);
+}
+
+.content-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--accent-blue);
+}
+
+.content-tabs > .ant-tabs-nav .ant-tabs-ink-bar {
+  height: 3px !important;
+  border-radius: 999px;
+  background: var(--accent-blue) !important;
 }
 
 .stats-toolbar__range {
@@ -840,7 +872,7 @@ img {
 }
 
 .dashboard-summary-grid {
-  margin-bottom: 0;
+  margin-bottom: 18px;
 }
 
 .metric-card .ant-card-body {

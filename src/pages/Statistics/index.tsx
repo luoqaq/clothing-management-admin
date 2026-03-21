@@ -306,7 +306,7 @@ const StatisticsPage: React.FC = () => {
           <ReactECharts option={salesChartOption} style={{ height: 350 }} />
         </Card>
 
-        <Row gutter={[18, 18]} style={{ marginBottom: 18 }}>
+        <Row gutter={[18, 18]} style={{ marginBottom: 18, marginTop: 18 }}>
           <Col xs={24} lg={12}>
             <Card title="类别销售分析" className="content-panel">
               <Row gutter={16}>
