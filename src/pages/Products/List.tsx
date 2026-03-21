@@ -13,12 +13,15 @@ import {
   Space,
   Table,
   Tag,
+  Typography,
   message,
 } from 'antd';
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { useProducts } from '../../hooks/useProducts';
 import ProductForm from './ProductForm';
 import type { Product, ProductFilters, ProductStatus, ProductSpecification } from '../../types';
+
+const { Title, Text } = Typography;
 
 const ProductList: React.FC = () => {
   const {
@@ -170,6 +173,7 @@ const ProductList: React.FC = () => {
     {
       title: '商品',
       key: 'product',
+      minWidth: 220,
       render: (_: unknown, record: Product) => (
         <div>
           <div style={{ fontWeight: 600 }}>{record.name}</div>
@@ -181,28 +185,33 @@ const ProductList: React.FC = () => {
       title: '分类',
       dataIndex: ['category', 'name'],
       key: 'category',
+      minWidth: 120,
       render: (_: unknown, record: Product) => record.category?.name || '-',
     },
     {
       title: '规格数',
       dataIndex: 'specCount',
       key: 'specCount',
+      minWidth: 110,
       render: (value: number) => `${value} 个规格`,
     },
     {
       title: '总库存',
       dataIndex: 'totalStock',
       key: 'totalStock',
+      minWidth: 100,
     },
     {
       title: '售价范围',
       key: 'priceRange',
+      minWidth: 160,
       render: (_: unknown, record: Product) => `¥${record.minPrice.toFixed(2)} - ¥${record.maxPrice.toFixed(2)}`,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
+      minWidth: 110,
       render: (status: ProductStatus) => {
         const statusMap: Record<ProductStatus, { text: string; color: string }> = {
           draft: { text: '草稿', color: 'default' },
@@ -216,8 +225,11 @@ const ProductList: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
+      fixed: 'right' as const,
+      width: 180,
+      minWidth: 180,
       render: (_: unknown, record: Product) => (
-        <Space>
+        <div className="table-actions-grid">
           <Button type="text" icon={<EyeOutlined />} onClick={() => { setSelectedProduct(record); setViewModalVisible(true); }}>
             查看
           </Button>
@@ -229,33 +241,38 @@ const ProductList: React.FC = () => {
               删除
             </Button>
           </Popconfirm>
-        </Space>
+        </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <Card
-        title="商品管理"
-        extra={
+    <div className="content-page">
+      <Card className="content-panel">
+        <div className="content-panel__header">
+          <div>
+            <Text className="content-panel__eyebrow">Catalog</Text>
+            <Title level={4} className="content-panel__title">
+              商品管理
+            </Title>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
             新建商品
           </Button>
-        }
-      >
-        <Space wrap style={{ marginBottom: 16 }}>
+        </div>
+
+        <div className="filter-toolbar">
           <Input.Search
             placeholder="搜索商品名称"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onSearch={handleSearch}
-            style={{ width: 240 }}
+            className="filter-toolbar__search"
           />
           <Select
             allowClear
             placeholder="分类"
-            style={{ width: 160 }}
+            className="filter-toolbar__select"
             value={selectedCategory}
             options={categories.map((item) => ({ label: item.name, value: item.id }))}
             onChange={setSelectedCategory}
@@ -263,7 +280,7 @@ const ProductList: React.FC = () => {
           <Select
             allowClear
             placeholder="品牌"
-            style={{ width: 160 }}
+            className="filter-toolbar__select"
             value={selectedBrand}
             options={brands.map((item) => ({ label: item.name, value: item.id }))}
             onChange={setSelectedBrand}
@@ -271,7 +288,7 @@ const ProductList: React.FC = () => {
           <Select
             allowClear
             placeholder="状态"
-            style={{ width: 160 }}
+            className="filter-toolbar__select"
             value={selectedStatus}
             options={[
               { label: '草稿', value: 'draft' },
@@ -282,13 +299,15 @@ const ProductList: React.FC = () => {
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
-        </Space>
+        </div>
 
         <Table
+          className="content-table"
           rowKey="id"
           loading={loading}
           columns={columns}
           dataSource={products}
+          scroll={{ x: 1120 }}
           pagination={{
             current: pagination.page,
             pageSize: pagination.pageSize,
@@ -300,8 +319,8 @@ const ProductList: React.FC = () => {
 
       <Modal open={viewModalVisible} title="商品详情" footer={null} onCancel={() => setViewModalVisible(false)} width={960}>
         {selectedProduct && (
-          <>
-            <Descriptions bordered column={2} style={{ marginBottom: 16 }}>
+          <div className="detail-sheet">
+            <Descriptions bordered column={2} className="detail-sheet__descriptions">
               <Descriptions.Item label="商品名称">{selectedProduct.name}</Descriptions.Item>
               <Descriptions.Item label="商品状态">
                 {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
@@ -314,8 +333,8 @@ const ProductList: React.FC = () => {
               <Descriptions.Item label="标签">{selectedProduct.tags.join('，') || '-'}</Descriptions.Item>
               <Descriptions.Item label="描述" span={2}>{selectedProduct.description || '-'}</Descriptions.Item>
             </Descriptions>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 600, marginBottom: 8 }}>主图</div>
+            <div className="detail-sheet__section">
+              <Text className="detail-sheet__section-title">主图</Text>
               <Space wrap size={12}>
                 {selectedProduct.mainImages.length > 0 ? (
                   selectedProduct.mainImages.map((url, index) => (
@@ -329,12 +348,12 @@ const ProductList: React.FC = () => {
                     />
                   ))
                 ) : (
-                  <span style={{ color: '#8c8c8c' }}>暂无主图</span>
+                  <Text className="detail-sheet__empty-text">暂无主图</Text>
                 )}
               </Space>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 600, marginBottom: 8 }}>详情图</div>
+            <div className="detail-sheet__section">
+              <Text className="detail-sheet__section-title">详情图</Text>
               <Space wrap size={12}>
                 {selectedProduct.detailImages.length > 0 ? (
                   selectedProduct.detailImages.map((url, index) => (
@@ -348,26 +367,29 @@ const ProductList: React.FC = () => {
                     />
                   ))
                 ) : (
-                  <span style={{ color: '#8c8c8c' }}>暂无详情图</span>
+                  <Text className="detail-sheet__empty-text">暂无详情图</Text>
                 )}
               </Space>
             </div>
             <Table
+              className="content-table"
               rowKey="id"
               pagination={false}
+              scroll={{ x: 960 }}
               title={() => '规格明细'}
               dataSource={selectedProduct.specifications}
               columns={[
-                { title: '规格', key: 'specification', render: (_, item: ProductSpecification) => `${item.color} / ${item.size}` },
-                { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode' },
-                { title: '售价', dataIndex: 'salePrice', key: 'salePrice', render: (value: number) => `¥${value.toFixed(2)}` },
-                { title: '成本价', dataIndex: 'costPrice', key: 'costPrice', render: (value: number) => `¥${value.toFixed(2)}` },
-                { title: '库存', dataIndex: 'stock', key: 'stock' },
-                { title: '占用', dataIndex: 'reservedStock', key: 'reservedStock' },
-                { title: '可售', dataIndex: 'availableStock', key: 'availableStock' },
+                { title: '规格', key: 'specification', minWidth: 140, render: (_, item: ProductSpecification) => `${item.color} / ${item.size}` },
+                { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode', minWidth: 150 },
+                { title: '售价', dataIndex: 'salePrice', key: 'salePrice', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '成本价', dataIndex: 'costPrice', key: 'costPrice', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '库存', dataIndex: 'stock', key: 'stock', minWidth: 90 },
+                { title: '占用', dataIndex: 'reservedStock', key: 'reservedStock', minWidth: 90 },
+                { title: '可售', dataIndex: 'availableStock', key: 'availableStock', minWidth: 90 },
                 {
                   title: '操作',
                   key: 'actions',
+                  minWidth: 120,
                   render: (_, specification: ProductSpecification) => (
                     <Button type="link" onClick={() => handleEditStock(selectedProduct, specification)}>
                       调整库存
@@ -376,7 +398,7 @@ const ProductList: React.FC = () => {
                 },
               ]}
             />
-          </>
+          </div>
         )}
       </Modal>
 

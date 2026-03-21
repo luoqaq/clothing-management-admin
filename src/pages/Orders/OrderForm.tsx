@@ -13,11 +13,14 @@ import {
   Space,
   Table,
   Tag,
+  Typography,
   message,
 } from 'antd';
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Order, OrderAddress, Product, ProductSpecification } from '../../types';
 import { useProducts } from '../../hooks/useProducts';
+
+const { Title, Text } = Typography;
 
 type DraftOrder = Omit<Order, 'id' | 'orderNo' | 'createdAt' | 'updatedAt'>;
 
@@ -154,8 +157,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ discountAmount: 0, paymentStatus: 'paid' }}>
-      <Card title="客户信息" size="small">
+    <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ discountAmount: 0, paymentStatus: 'paid' }} className="editor-form">
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Customer</Text>
+            <Title level={4} className="form-panel__title">
+              客户信息
+            </Title>
+          </div>
+        </div>
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item name="customerName" label="客户姓名" rules={[{ required: true, message: '请输入客户姓名' }]}>
@@ -182,7 +193,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         </Row>
       </Card>
 
-      <Card title="收货地址" size="small" style={{ marginTop: 16 }}>
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Address</Text>
+            <Title level={4} className="form-panel__title">
+              收货地址
+            </Title>
+          </div>
+        </div>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="addressName" label="收货人" rules={[{ required: true, message: '请输入收货人姓名' }]}>
@@ -229,17 +248,20 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         </Row>
       </Card>
 
-      <Card
-        title="商品规格"
-        size="small"
-        style={{ marginTop: 16 }}
-        extra={
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Order items</Text>
+            <Title level={4} className="form-panel__title">
+              商品规格
+            </Title>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setSelectorVisible(true)}>
             选择规格
           </Button>
-        }
-      >
+        </div>
         <Table
+          className="content-table"
           rowKey="skuId"
           pagination={false}
           dataSource={cartItems}
@@ -316,7 +338,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         />
       </Card>
 
-      <Card title="支付信息" size="small" style={{ marginTop: 16 }}>
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Payment</Text>
+            <Title level={4} className="form-panel__title">
+              支付信息
+            </Title>
+          </div>
+        </div>
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item name="paymentMethod" label="支付方式">
@@ -349,10 +379,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         <Form.Item name="note" label="备注">
           <Input.TextArea rows={3} />
         </Form.Item>
-        <div style={{ textAlign: 'right', fontWeight: 600 }}>应收金额：¥{finalAmount.toFixed(2)}</div>
+        <div className="order-summary">
+          <Text className="order-summary__label">应收金额</Text>
+          <Text className="order-summary__value">¥{finalAmount.toFixed(2)}</Text>
+        </div>
       </Card>
 
-      <div style={{ marginTop: 24, textAlign: 'right' }}>
+      <div className="form-actions">
         <Space>
           <Button onClick={onCancel}>取消</Button>
           <Button type="primary" htmlType="submit" loading={loading}>
@@ -369,23 +402,24 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         onCancel={() => setSelectorVisible(false)}
         destroyOnHidden
       >
-        <Space wrap style={{ marginBottom: 16 }}>
+        <div className="filter-toolbar">
           <Input.Search
             placeholder="搜索商品名称"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 240 }}
+            className="filter-toolbar__search"
           />
           <Select
             allowClear
             placeholder="分类"
-            style={{ width: 160 }}
+            className="filter-toolbar__select"
             value={categoryId}
             options={categories.map((item) => ({ label: item.name, value: item.id }))}
             onChange={setCategoryId}
           />
-        </Space>
+        </div>
         <Table
+          className="content-table"
           rowKey="skuId"
           pagination={{ pageSize: 8 }}
           dataSource={specificationRows}

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Divider, Form, Input, InputNumber, Select, Space, message } from 'antd';
+import { Button, Card, Col, Divider, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductBrand, ProductCategory } from '../../types';
 import ImageUploadField from '../../components/ImageUploadField';
+
+const { Title, Text } = Typography;
 
 interface ProductFormProps {
   categories: ProductCategory[];
@@ -116,114 +118,173 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish}>
-      <Divider>基础信息</Divider>
-      <Form.Item name="name" label="商品名称" rules={[{ required: true, message: '请输入商品名称' }]}>
-        <Input placeholder="例如：基础圆领T恤" />
-      </Form.Item>
-      <Space style={{ display: 'flex' }} align="start">
-        <Form.Item
-          name="categoryId"
-          label="商品分类"
-          rules={[{ required: true, message: '请选择商品分类' }]}
-          style={{ minWidth: 200 }}
-        >
-          <Select placeholder="选择分类" options={categories.map((item) => ({ label: item.name, value: item.id }))} />
-        </Form.Item>
-        <Form.Item name="brandId" label="品牌" style={{ minWidth: 200 }}>
-          <Select
-            allowClear
-            placeholder="选择品牌"
-            options={brands.map((item) => ({ label: item.name, value: item.id }))}
-          />
-        </Form.Item>
-        <Form.Item
-          name="status"
-          label="商品状态"
-          rules={[{ required: true, message: '请选择商品状态' }]}
-          style={{ minWidth: 200 }}
-        >
-          <Select
-            options={[
-              { label: '草稿', value: 'draft' },
-              { label: '上架中', value: 'active' },
-              { label: '已下架', value: 'inactive' },
-            ]}
-          />
-        </Form.Item>
-      </Space>
-      <Form.Item name="description" label="商品描述">
-        <Input.TextArea rows={3} placeholder="补充商品卖点、材质或适用场景" />
-      </Form.Item>
-      <Form.Item name="mainImages" label="主图">
-        <ImageUploadField scene="main" maxCount={5} onUploadingChange={setIsMainImagesUploading} />
-      </Form.Item>
-      <Form.Item name="detailImages" label="详情图">
-        <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
-      </Form.Item>
-      <Form.Item name="tags" label="标签">
-        <Input placeholder="例如：基础款, 百搭, 春夏" />
-      </Form.Item>
+    <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Product editor</Text>
+            <Title level={4} className="form-panel__title">
+              基础信息
+            </Title>
+          </div>
+        </div>
+        <Row gutter={[16, 0]}>
+          <Col xs={24}>
+            <Form.Item name="name" label="商品名称" rules={[{ required: true, message: '请输入商品名称' }]}>
+              <Input placeholder="例如：基础圆领T恤" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={8}>
+            <Form.Item
+              name="categoryId"
+              label="商品分类"
+              rules={[{ required: true, message: '请选择商品分类' }]}
+            >
+              <Select placeholder="选择分类" options={categories.map((item) => ({ label: item.name, value: item.id }))} />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={8}>
+            <Form.Item name="brandId" label="品牌">
+              <Select
+                allowClear
+                placeholder="选择品牌"
+                options={brands.map((item) => ({ label: item.name, value: item.id }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={8}>
+            <Form.Item
+              name="status"
+              label="商品状态"
+              rules={[{ required: true, message: '请选择商品状态' }]}
+            >
+              <Select
+                options={[
+                  { label: '草稿', value: 'draft' },
+                  { label: '上架中', value: 'active' },
+                  { label: '已下架', value: 'inactive' },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24}>
+            <Form.Item name="description" label="商品描述">
+              <Input.TextArea rows={4} placeholder="补充商品卖点、材质或适用场景" />
+            </Form.Item>
+          </Col>
+          <Col xs={24}>
+            <Form.Item name="tags" label="标签">
+              <Input placeholder="例如：基础款, 百搭, 春夏" />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Card>
 
-      <Divider>规格明细</Divider>
-      <Form.List name="specifications">
-        {(fields, { add, remove }) => (
-          <>
-            {fields.map(({ key, name, ...restField }) => (
-              <Space
-                key={key}
-                align="start"
-                style={{ display: 'flex', marginBottom: 16, padding: 12, border: '1px solid #f0f0f0', borderRadius: 8 }}
-              >
-                <Form.Item
-                  {...restField}
-                  name={[name, 'skuCode']}
-                  label="规格编码"
-                  rules={[{ required: true, message: '请输入规格编码' }]}
-                >
-                  <Input placeholder="SKU-001" />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'color']} label="颜色" rules={[{ required: true }]}>
-                  <Input placeholder="白色" />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'size']} label="尺码" rules={[{ required: true }]}>
-                  <Input placeholder="M" />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'salePrice']} label="售价" rules={[{ required: true }]}>
-                  <InputNumber min={0} precision={2} />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'costPrice']} label="成本价" rules={[{ required: true }]}>
-                  <InputNumber min={0} precision={2} />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'stock']} label="库存" rules={[{ required: true }]}>
-                  <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item {...restField} name={[name, 'status']} label="状态" initialValue="active">
-                  <Select
-                    style={{ width: 120 }}
-                    options={[
-                      { label: '启用', value: 'active' },
-                      { label: '停用', value: 'inactive' },
-                    ]}
-                  />
-                </Form.Item>
-                <Button
-                  danger
-                  icon={<MinusCircleOutlined />}
-                  style={{ marginTop: 30 }}
-                  onClick={() => remove(name)}
-                  disabled={fields.length === 1}
-                />
-              </Space>
-            ))}
-            <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-              添加规格
-            </Button>
-          </>
-        )}
-      </Form.List>
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Assets</Text>
+            <Title level={4} className="form-panel__title">
+              图片与展示素材
+            </Title>
+          </div>
+        </div>
+        <Form.Item name="mainImages" label="主图">
+          <ImageUploadField scene="main" maxCount={5} onUploadingChange={setIsMainImagesUploading} />
+        </Form.Item>
+        <Divider />
+        <Form.Item name="detailImages" label="详情图">
+          <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
+        </Form.Item>
+      </Card>
 
-      <Form.Item style={{ marginBottom: 0, textAlign: 'right', marginTop: 24 }}>
+      <Card className="form-panel">
+        <div className="form-panel__header">
+          <div>
+            <Text className="form-panel__eyebrow">Specifications</Text>
+            <Title level={4} className="form-panel__title">
+              规格明细
+            </Title>
+          </div>
+        </div>
+        <Form.List name="specifications">
+          {(fields, { add, remove }) => (
+            <>
+              <div className="spec-grid">
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <Card key={key} className="spec-card">
+                    <div className="spec-card__header">
+                      <div>
+                        <Text className="spec-card__index">规格 {index + 1}</Text>
+                      </div>
+                      <Button
+                        danger
+                        icon={<MinusCircleOutlined />}
+                        onClick={() => remove(name)}
+                        disabled={fields.length === 1}
+                      >
+                        删除
+                      </Button>
+                    </div>
+                    <Row gutter={[16, 0]}>
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'skuCode']}
+                          label="规格编码"
+                          rules={[{ required: true, message: '请输入规格编码' }]}
+                        >
+                          <Input placeholder="SKU-001" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item {...restField} name={[name, 'color']} label="颜色" rules={[{ required: true }]}>
+                          <Input placeholder="白色" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item {...restField} name={[name, 'size']} label="尺码" rules={[{ required: true }]}>
+                          <Input placeholder="M" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item {...restField} name={[name, 'salePrice']} label="售价" rules={[{ required: true }]}>
+                          <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item {...restField} name={[name, 'costPrice']} label="成本价" rules={[{ required: true }]}>
+                          <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item {...restField} name={[name, 'stock']} label="库存" rules={[{ required: true }]}>
+                          <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item {...restField} name={[name, 'status']} label="状态" initialValue="active">
+                          <Select
+                            options={[
+                              { label: '启用', value: 'active' },
+                              { label: '停用', value: 'inactive' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+                ))}
+              </div>
+              <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                添加规格
+              </Button>
+            </>
+          )}
+        </Form.List>
+      </Card>
+
+      <Form.Item className="form-actions">
         <Space>
           <Button onClick={onCancel}>取消</Button>
           <Button type="primary" htmlType="submit" loading={loading} disabled={isMainImagesUploading || isDetailImagesUploading}>

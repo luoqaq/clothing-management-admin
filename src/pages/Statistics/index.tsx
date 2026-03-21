@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Row, Col, Card, Table, Typography, Spin, DatePicker, Button, message, Space } from 'antd';
+import { Row, Col, Card, Table, Typography, Spin, DatePicker, Button, message, Space, Empty } from 'antd';
 import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { useStatistics } from '../../hooks/useStatistics';
 import type { ProductSalesRanking } from '../../types';
 import dayjs from 'dayjs';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const StatisticsPage: React.FC = () => {
@@ -71,15 +71,12 @@ const StatisticsPage: React.FC = () => {
 
   if (error) {
     return (
-      <Card>
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <Title level={4} type="secondary">
-            {error}
-          </Title>
-          <Button type="primary" onClick={handleRefresh} style={{ marginTop: 16 }}>
+      <Card className="content-panel">
+        <Empty description={error}>
+          <Button type="primary" onClick={handleRefresh}>
             重新加载
           </Button>
-        </div>
+        </Empty>
       </Card>
     );
   }
@@ -279,16 +276,20 @@ const StatisticsPage: React.FC = () => {
   ];
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          数据统计
-        </Title>
-        <Space>
+    <div className="content-page">
+      <Card className="content-panel">
+        <div className="content-panel__header">
+          <div>
+            <Text className="content-panel__eyebrow">Analysis</Text>
+            <Title level={4} className="content-panel__title">
+              数据统计
+            </Title>
+          </div>
+          <Space wrap>
           <RangePicker
             value={datePickerValue}
             onChange={handleDateChange}
-            style={{ width: 300 }}
+            className="stats-toolbar__range"
           />
           <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
             刷新
@@ -296,25 +297,25 @@ const StatisticsPage: React.FC = () => {
           <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport}>
             导出
           </Button>
-        </Space>
-      </div>
+          </Space>
+        </div>
+      </Card>
 
       <Spin spinning={loading}>
-        {/* 销售趋势 */}
-        <Card title="销售趋势" style={{ marginBottom: 16 }}>
+        <Card title="销售趋势" className="content-panel">
           <ReactECharts option={salesChartOption} style={{ height: 350 }} />
         </Card>
 
-        <Row gutter={16} style={{ marginBottom: 16 }}>
-          {/* 类别销售 */}
+        <Row gutter={[18, 18]} style={{ marginBottom: 18 }}>
           <Col xs={24} lg={12}>
-            <Card title="类别销售分析">
+            <Card title="类别销售分析" className="content-panel">
               <Row gutter={16}>
                 <Col span={12}>
                   <ReactECharts option={categoryChartOption} style={{ height: 300 }} />
                 </Col>
                 <Col span={12}>
                   <Table
+                    className="content-table"
                     columns={categoryColumns}
                     dataSource={categorySales}
                     rowKey="categoryId"
@@ -326,17 +327,16 @@ const StatisticsPage: React.FC = () => {
             </Card>
           </Col>
 
-          {/* 区域销售 */}
           <Col xs={24} lg={12}>
-            <Card title="区域销售分析">
+            <Card title="区域销售分析" className="content-panel">
               <ReactECharts option={regionChartOption} style={{ height: 300 }} />
             </Card>
           </Col>
         </Row>
 
-        {/* 商品销售排名 */}
-        <Card title="商品销售排行 TOP 10">
+        <Card title="商品销售排行 TOP 10" className="content-panel">
           <Table
+            className="content-table"
             columns={productColumns}
             dataSource={productRankings}
             rowKey="productId"

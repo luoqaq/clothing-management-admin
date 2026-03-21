@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Descriptions, Form, Input, Modal, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Descriptions, Form, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd';
 import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
 import { useOrders } from '../../hooks/useOrders';
 import OrderForm from './OrderForm';
+
+const { Title, Text } = Typography;
 
 const OrderList: React.FC = () => {
   const {
@@ -139,11 +141,13 @@ const OrderList: React.FC = () => {
       title: '订单号',
       dataIndex: 'orderNo',
       key: 'orderNo',
+      minWidth: 180,
       render: (text: string) => <span style={{ fontFamily: 'monospace' }}>{text}</span>,
     },
     {
       title: '客户信息',
       key: 'customer',
+      minWidth: 160,
       render: (_: unknown, record: Order) => (
         <div>
           <div>{record.customerName}</div>
@@ -155,6 +159,7 @@ const OrderList: React.FC = () => {
       title: '商品规格',
       dataIndex: 'items',
       key: 'items',
+      minWidth: 260,
       render: (items: Order['items']) => (
         <div>
           <div>{items.length} 个规格</div>
@@ -168,12 +173,14 @@ const OrderList: React.FC = () => {
       title: '订单金额',
       dataIndex: 'finalAmount',
       key: 'finalAmount',
+      minWidth: 120,
       render: (amount: number) => `¥${amount.toFixed(2)}`,
     },
     {
       title: '订单状态',
       dataIndex: 'status',
       key: 'status',
+      minWidth: 120,
       render: (status: OrderStatus) => {
         const mapping: Record<OrderStatus, { text: string; color: string }> = {
           pending: { text: '待处理', color: 'orange' },
@@ -190,19 +197,24 @@ const OrderList: React.FC = () => {
       title: '支付状态',
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
+      minWidth: 120,
       render: (status: string) => <Tag color={status === 'paid' ? 'green' : status === 'refunded' ? 'red' : 'orange'}>{status === 'paid' ? '已支付' : status === 'refunded' ? '已退款' : '待支付'}</Tag>,
     },
     {
       title: '下单时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      minWidth: 160,
       render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: '操作',
       key: 'actions',
+      fixed: 'right' as const,
+      width: 180,
+      minWidth: 180,
       render: (_: unknown, record: Order) => (
-        <Space size="small">
+        <div className="table-actions-grid">
           <Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.id)}>
             查看
           </Button>
@@ -226,33 +238,38 @@ const OrderList: React.FC = () => {
               退款
             </Button>
           )}
-        </Space>
+        </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <Card
-        title="订单管理"
-        extra={
+    <div className="content-page">
+      <Card className="content-panel">
+        <div className="content-panel__header">
+          <div>
+            <Text className="content-panel__eyebrow">Fulfillment</Text>
+            <Title level={4} className="content-panel__title">
+              订单管理
+            </Title>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddVisible(true)}>
             新建订单
           </Button>
-        }
-      >
-        <Space wrap style={{ marginBottom: 16 }}>
+        </div>
+
+        <div className="filter-toolbar">
           <Input.Search
             placeholder="搜索订单号、客户名、电话"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onSearch={handleSearch}
-            style={{ width: 260 }}
+            className="filter-toolbar__search"
           />
           <Select
             allowClear
             placeholder="订单状态"
-            style={{ width: 160 }}
+            className="filter-toolbar__select"
             value={selectedStatus}
             onChange={setSelectedStatus}
             options={[
@@ -267,7 +284,7 @@ const OrderList: React.FC = () => {
           <Select
             allowClear
             placeholder="支付状态"
-            style={{ width: 160 }}
+            className="filter-toolbar__select"
             value={selectedPaymentStatus}
             onChange={setSelectedPaymentStatus}
             options={[
@@ -278,13 +295,15 @@ const OrderList: React.FC = () => {
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
-        </Space>
+        </div>
 
         <Table
+          className="content-table"
           rowKey="id"
           loading={loading}
           columns={columns}
           dataSource={orders}
+          scroll={{ x: 1380 }}
           pagination={{
             current: pagination.page,
             pageSize: pagination.pageSize,
@@ -300,8 +319,8 @@ const OrderList: React.FC = () => {
 
       <Modal open={detailVisible} title="订单详情" footer={null} onCancel={() => setDetailVisible(false)} width={960}>
         {currentOrder && (
-          <>
-            <Descriptions bordered column={2} style={{ marginBottom: 16 }}>
+          <div className="detail-sheet">
+            <Descriptions bordered column={2} className="detail-sheet__descriptions">
               <Descriptions.Item label="订单号">{currentOrder.orderNo}</Descriptions.Item>
               <Descriptions.Item label="订单状态">{currentOrder.status}</Descriptions.Item>
               <Descriptions.Item label="客户姓名">{currentOrder.customerName}</Descriptions.Item>
@@ -315,19 +334,21 @@ const OrderList: React.FC = () => {
               </Descriptions.Item>
             </Descriptions>
             <Table
+              className="content-table"
               rowKey="id"
               pagination={false}
+              scroll={{ x: 840 }}
               dataSource={currentOrder.items}
               columns={[
-                { title: '商品', dataIndex: 'productName', key: 'productName' },
-                { title: '规格', key: 'specification', render: (_, item) => `${item.color || '-'} / ${item.size || '-'}` },
-                { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode' },
-                { title: '单价', dataIndex: 'price', key: 'price', render: (value: number) => `¥${value.toFixed(2)}` },
-                { title: '数量', dataIndex: 'quantity', key: 'quantity' },
-                { title: '小计', key: 'subtotal', render: (_, item) => `¥${(item.price * item.quantity).toFixed(2)}` },
+                { title: '商品', dataIndex: 'productName', key: 'productName', minWidth: 180 },
+                { title: '规格', key: 'specification', minWidth: 130, render: (_, item) => `${item.color || '-'} / ${item.size || '-'}` },
+                { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode', minWidth: 150 },
+                { title: '单价', dataIndex: 'price', key: 'price', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '数量', dataIndex: 'quantity', key: 'quantity', minWidth: 90 },
+                { title: '小计', key: 'subtotal', minWidth: 110, render: (_, item) => `¥${(item.price * item.quantity).toFixed(2)}` },
               ]}
             />
-          </>
+          </div>
         )}
       </Modal>
 

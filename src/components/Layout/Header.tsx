@@ -1,22 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Layout, Typography, Avatar, Dropdown, Space, Button, Badge } from 'antd';
-import { MenuUnfoldOutlined, MenuFoldOutlined, BellOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
+import { MenuUnfoldOutlined, MenuFoldOutlined, BellOutlined, UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import dayjs from 'dayjs';
 
 const { Header } = Layout;
 const { Text } = Typography;
+const BRAND_NAME = 'chuchu的橱窗';
+
+const PAGE_META: Record<string, { title: string; subtitle: string }> = {
+  '/dashboard': {
+    title: '数据总览',
+    subtitle: '以更克制的方式查看今天的经营节奏与趋势变化。',
+  },
+  '/products': {
+    title: '商品管理',
+    subtitle: '管理上架商品、库存与展示素材。',
+  },
+  '/orders': {
+    title: '订单管理',
+    subtitle: '追踪每一笔订单状态与履约进度。',
+  },
+  '/statistics': {
+    title: '经营分析',
+    subtitle: '用轻量图表查看销售、品类和区域变化。',
+  },
+  '/configuration': {
+    title: '系统配置',
+    subtitle: '统一管理品牌信息、基础配置与展示规则。',
+  },
+};
 
 interface HeaderProps {
   collapsed: boolean;
   onToggle: () => void;
+  onHeightChange?: (height: number) => void;
 }
 
-const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
-  const { user } = useAuth();
+const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle, onHeightChange }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const headerRef = useRef<HTMLElement | null>(null);
   const [currentTime, setCurrentTime] = useState<string>(
     dayjs().format('YYYY年MM月DD日 HH:mm:ss')
   );
+  const pageMeta = Object.entries(PAGE_META).find(([path]) =>
+    location.pathname.startsWith(path)
+  )?.[1] ?? {
+    title: 'chuchu的橱窗',
+    subtitle: '保持界面克制，把注意力留给关键决策。',
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,8 +62,31 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
     return () => clearInterval(timer);
   }, []);
 
+  useLayoutEffect(() => {
+    const element = headerRef.current;
+    if (!element || !onHeightChange) return;
+
+    const updateHeight = () => {
+      onHeightChange(element.getBoundingClientRect().height);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(element);
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, [collapsed, location.pathname, onHeightChange]);
+
   // 用户菜单
-  const userMenuItems = [
+  const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
@@ -38,7 +97,26 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
       icon: <SettingOutlined />,
       label: '账号设置',
     },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      danger: true,
+    },
   ];
+
+  const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'logout') {
+      logout();
+      navigate('/login');
+      return;
+    }
+
+    console.log('User menu click:', key);
+  };
 
   // 通知菜单
   const notificationMenuItems = [
@@ -58,35 +136,31 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
 
   return (
     <Header
-      style={{
-        padding: '0 24px',
-        background: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 1px 4px rgba(0, 21, 41, 0.08)',
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        left: collapsed ? 80 : 250,
-        zIndex: 1000,
-        transition: 'all 0.2s',
-      }}
+      ref={headerRef}
+      className="app-header"
+      style={{ left: collapsed ? 92 : 296 }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="app-header__primary">
         <Button
           type="text"
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           onClick={onToggle}
-          style={{ fontSize: '16px', width: 64, height: 64 }}
+          className="app-header__toggle"
         />
-        <div style={{ fontSize: '18px', fontWeight: 600 }}>
-          {collapsed ? '控制面板' : '数据概览'}
+        <div className="app-header__title-group">
+          <Text className="app-header__eyebrow">{BRAND_NAME}</Text>
+          <div className="app-header__title-row">
+            <Text className="app-header__title">{pageMeta.title}</Text>
+            {!collapsed && <Text className="app-header__subtitle">{pageMeta.subtitle}</Text>}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-        <Text type="secondary">{currentTime}</Text>
+      <div className="app-header__actions">
+        <div className="app-header__time-pill">
+          <Text className="app-header__time-label">Today</Text>
+          <Text className="app-header__time-value">{currentTime}</Text>
+        </div>
         <Badge count={3} size="small">
           <Dropdown
             menu={{
@@ -94,27 +168,26 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
               onClick: ({ key }) => console.log('Notification click:', key),
             }}
           >
-            <Button type="text" icon={<BellOutlined />} style={{ fontSize: '18px' }} />
+            <Button type="text" icon={<BellOutlined />} className="app-header__icon-button" />
           </Dropdown>
         </Badge>
         <Dropdown
           menu={{
             items: userMenuItems,
-            onClick: ({ key }) => console.log('User menu click:', key),
+            onClick: handleUserMenuClick,
           }}
         >
-          <Space style={{ cursor: 'pointer' }}>
+          <Space className="app-header__profile">
             <Avatar
               size={36}
               src={user?.avatar}
               icon={<UserOutlined />}
-              style={{ backgroundColor: '#1890ff' }}
+              className="app-header__avatar"
             />
-            {!collapsed && (
-              <Text strong style={{ fontSize: '14px' }}>
-                {user?.name}
-              </Text>
-            )}
+            <div className="app-header__profile-copy">
+              {!collapsed && <Text className="app-header__profile-name">{user?.name}</Text>}
+              {!collapsed && <Text className="app-header__profile-role">{user?.role}</Text>}
+            </div>
           </Space>
         </Dropdown>
       </div>

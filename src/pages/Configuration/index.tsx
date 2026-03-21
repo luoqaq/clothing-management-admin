@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Tabs, message } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Tabs, Typography, message } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useProducts } from '../../hooks/useProducts';
 import type { ProductBrand, ProductCategory } from '../../types';
+
+const { Title, Text } = Typography;
 
 interface BaseModalProps<T> {
   open: boolean;
@@ -120,18 +122,30 @@ const ConfigurationPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <Card title="基础资料" style={{ marginBottom: 16 }}>
-        <p style={{ color: '#666' }}>统一维护商品分类、品牌等主数据，供商品建档、规格管理和筛选使用。</p>
+    <div className="content-page">
+      <Card className="content-panel">
+        <div className="content-panel__header">
+          <div>
+            <Text className="content-panel__eyebrow">Master data</Text>
+            <Title level={4} className="content-panel__title">
+              基础资料
+            </Title>
+          </div>
+        </div>
+        <Text className="content-panel__intro">
+          统一维护商品分类、品牌等主数据，供商品建档、规格管理和筛选使用。
+        </Text>
       </Card>
 
       <Tabs
+        className="content-tabs"
         items={[
           {
             key: 'categories',
             label: '分类管理',
             children: (
               <Card
+                className="content-panel"
                 extra={
                   <Button
                     type="primary"
@@ -146,6 +160,7 @@ const ConfigurationPage: React.FC = () => {
                 }
               >
                 <Table
+                  className="content-table"
                   rowKey="id"
                   dataSource={categories}
                   columns={[
@@ -179,6 +194,7 @@ const ConfigurationPage: React.FC = () => {
             label: '品牌管理',
             children: (
               <Card
+                className="content-panel"
                 extra={
                   <Button
                     type="primary"
@@ -193,6 +209,7 @@ const ConfigurationPage: React.FC = () => {
                 }
               >
                 <Table
+                  className="content-table"
                   rowKey="id"
                   dataSource={brands}
                   columns={[

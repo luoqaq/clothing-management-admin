@@ -168,6 +168,7 @@ export default function ImageUploadField({
   return (
     <>
       <Upload
+        className="brand-upload"
         accept="image/jpeg,image/png,image/webp"
         listType="picture-card"
         fileList={fileList}
@@ -177,37 +178,34 @@ export default function ImageUploadField({
         onPreview={handlePreview}
         multiple
       >
-        {fileList.length >= maxCount ? null : '+ 上传图片'}
+        {fileList.length >= maxCount ? null : (
+          <div className="brand-upload__trigger">
+            <Typography.Text className="brand-upload__trigger-title">上传图片</Typography.Text>
+            <Typography.Text className="brand-upload__trigger-note">
+              最多 {maxCount} 张
+            </Typography.Text>
+          </div>
+        )}
       </Upload>
       {value.length > 0 ? (
-        <div style={{ marginTop: 12 }}>
-          <Typography.Text type="secondary">已上传图片顺序</Typography.Text>
+        <div className="brand-upload__gallery">
+          <Typography.Text className="brand-upload__gallery-title">已上传图片顺序</Typography.Text>
           <Flex wrap gap={12} style={{ marginTop: 8 }}>
             {value.map((url, index) => (
               <Card
                 key={url}
                 size="small"
+                className="brand-upload__card"
                 styles={{ body: { padding: 8, width: 148 } }}
               >
-                <div
-                  style={{
-                    width: 132,
-                    height: 132,
-                    overflow: 'hidden',
-                    borderRadius: 8,
-                    background: '#f5f5f5',
-                    cursor: 'pointer',
-                    marginBottom: 8,
-                  }}
-                  onClick={() => setPreviewUrl(url)}
-                >
+                <div className="brand-upload__preview" onClick={() => setPreviewUrl(url)}>
                   <img
                     src={url}
                     alt={`uploaded-${index + 1}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="brand-upload__preview-image"
                   />
                 </div>
-                <Typography.Text style={{ display: 'block', marginBottom: 8 }}>
+                <Typography.Text className="brand-upload__order-label">
                   第 {index + 1} 张
                 </Typography.Text>
                 <Space size={4}>
