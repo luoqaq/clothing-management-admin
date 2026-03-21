@@ -4,6 +4,7 @@ import {
   Card,
   Descriptions,
   Form,
+  Image,
   Input,
   InputNumber,
   Modal,
@@ -133,6 +134,39 @@ const ProductList: React.FC = () => {
   };
 
   const columns = [
+    {
+      title: '主图',
+      key: 'mainImage',
+      width: 100,
+      render: (_: unknown, record: Product) => {
+        const imageUrl = record.mainImages[0];
+        return imageUrl ? (
+          <Image
+            src={imageUrl}
+            width={56}
+            height={56}
+            style={{ objectFit: 'cover', borderRadius: 8 }}
+            preview={{ src: imageUrl }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 8,
+              background: '#f5f5f5',
+              color: '#bfbfbf',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+            }}
+          >
+            无图
+          </div>
+        );
+      },
+    },
     {
       title: '商品',
       key: 'product',
@@ -280,6 +314,44 @@ const ProductList: React.FC = () => {
               <Descriptions.Item label="标签">{selectedProduct.tags.join('，') || '-'}</Descriptions.Item>
               <Descriptions.Item label="描述" span={2}>{selectedProduct.description || '-'}</Descriptions.Item>
             </Descriptions>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 600, marginBottom: 8 }}>主图</div>
+              <Space wrap size={12}>
+                {selectedProduct.mainImages.length > 0 ? (
+                  selectedProduct.mainImages.map((url, index) => (
+                    <Image
+                      key={`${url}-${index}`}
+                      src={url}
+                      width={120}
+                      height={120}
+                      style={{ objectFit: 'cover', borderRadius: 8 }}
+                      preview={{ src: url }}
+                    />
+                  ))
+                ) : (
+                  <span style={{ color: '#8c8c8c' }}>暂无主图</span>
+                )}
+              </Space>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 600, marginBottom: 8 }}>详情图</div>
+              <Space wrap size={12}>
+                {selectedProduct.detailImages.length > 0 ? (
+                  selectedProduct.detailImages.map((url, index) => (
+                    <Image
+                      key={`${url}-${index}`}
+                      src={url}
+                      width={120}
+                      height={120}
+                      style={{ objectFit: 'cover', borderRadius: 8 }}
+                      preview={{ src: url }}
+                    />
+                  ))
+                ) : (
+                  <span style={{ color: '#8c8c8c' }}>暂无详情图</span>
+                )}
+              </Space>
+            </div>
             <Table
               rowKey="id"
               pagination={false}

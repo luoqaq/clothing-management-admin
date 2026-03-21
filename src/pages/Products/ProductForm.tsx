@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { Button, Divider, Form, Input, InputNumber, Select, Space } from 'antd';
+import { useEffect, useState } from 'react';
+import { Button, Divider, Form, Input, InputNumber, Select, Space, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductBrand, ProductCategory } from '../../types';
+import ImageUploadField from '../../components/ImageUploadField';
 
 interface ProductFormProps {
   categories: ProductCategory[];
@@ -21,6 +22,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
   product,
 }) => {
   const [form] = Form.useForm();
+  const [isMainImagesUploading, setIsMainImagesUploading] = useState(false);
+  const [isDetailImagesUploading, setIsDetailImagesUploading] = useState(false);
 
   useEffect(() => {
     if (!product) {
@@ -48,8 +51,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
       categoryId: product.categoryId,
       brandId: product.brandId ?? undefined,
       status: product.status,
-      mainImages: product.mainImages.join('\n'),
-      detailImages: product.detailImages.join('\n'),
+      mainImages: product.mainImages,
+      detailImages: product.detailImages,
       tags: product.tags.join(','),
       specifications: product.specifications.map((item) => ({
         skuCode: item.skuCode,
@@ -66,23 +69,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
   }, [form, product]);
 
   const handleFinish = async (values: any) => {
+    if (isMainImagesUploading || isDetailImagesUploading) {
+      message.error('图片上传中，请等待上传完成后再保存商品');
+      return;
+    }
+
     await onSubmit({
       name: values.name,
       description: values.description,
       categoryId: values.categoryId,
       brandId: values.brandId ?? null,
-      mainImages: values.mainImages
-        ? String(values.mainImages)
-            .split('\n')
-            .map((item: string) => item.trim())
-            .filter(Boolean)
-        : [],
-      detailImages: values.detailImages
-        ? String(values.detailImages)
-            .split('\n')
-            .map((item: string) => item.trim())
-            .filter(Boolean)
-        : [],
+      mainImages: Array.isArray(values.mainImages) ? values.mainImages : [],
+      detailImages: Array.isArray(values.detailImages) ? values.detailImages : [],
       tags: values.tags
         ? String(values.tags)
             .split(',')
@@ -157,11 +155,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
       <Form.Item name="description" label="商品描述">
         <Input.TextArea rows={3} placeholder="补充商品卖点、材质或适用场景" />
       </Form.Item>
-      <Form.Item name="mainImages" label="主图链接">
-        <Input.TextArea rows={2} placeholder="每行一个图片链接" />
+      <Form.Item name="mainImages" label="主图">
+        <ImageUploadField scene="main" maxCount={5} onUploadingChange={setIsMainImagesUploading} />
       </Form.Item>
-      <Form.Item name="detailImages" label="详情图链接">
-        <Input.TextArea rows={2} placeholder="每行一个图片链接" />
+      <Form.Item name="detailImages" label="详情图">
+        <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
       </Form.Item>
       <Form.Item name="tags" label="标签">
         <Input placeholder="例如：基础款, 百搭, 春夏" />
@@ -228,7 +226,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       <Form.Item style={{ marginBottom: 0, textAlign: 'right', marginTop: 24 }}>
         <Space>
           <Button onClick={onCancel}>取消</Button>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <Button type="primary" htmlType="submit" loading={loading} disabled={isMainImagesUploading || isDetailImagesUploading}>
             保存商品
           </Button>
         </Space>

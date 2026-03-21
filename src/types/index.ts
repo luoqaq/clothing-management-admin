@@ -239,6 +239,31 @@ export interface ApiResponse<T = any> {
   message?: string;
 }
 
+export type UploadAssetBiz = 'product' | 'brand' | 'avatar';
+export type UploadAssetScene = 'main' | 'detail' | 'logo' | 'avatar';
+
+export interface UploadPolicyRequest {
+  biz: UploadAssetBiz;
+  scene: UploadAssetScene;
+  fileName: string;
+  contentType: string;
+  size: number;
+}
+
+export interface UploadPolicy {
+  bucket: string;
+  region: string;
+  key: string;
+  url: string;
+  startTime: number;
+  expiredTime: number;
+  credentials: {
+    tmpSecretId: string;
+    tmpSecretKey: string;
+    sessionToken: string;
+  };
+}
+
 export interface PaginatedResponse<T = any> {
   items: T[];
   total: number;
