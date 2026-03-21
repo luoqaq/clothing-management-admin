@@ -459,66 +459,47 @@ img {
   width: 160px;
 }
 
-.filter-toolbar__search.ant-input-search {
-  display: flex;
-  align-items: stretch;
-}
-
-.filter-toolbar__search.ant-input-search > .ant-input-group {
-  display: flex;
-  align-items: stretch;
-}
-
-.filter-toolbar__search.ant-input-search .ant-input-affix-wrapper,
-.filter-toolbar__search.ant-input-search .ant-input-group-addon,
+.filter-toolbar .filter-toolbar__search.ant-input,
+.filter-toolbar .filter-toolbar__select.ant-select.ant-select-single,
 .filter-toolbar .ant-btn {
   height: 44px !important;
-}
-
-.filter-toolbar__search.ant-input-search .ant-input-affix-wrapper,
-.filter-toolbar .ant-select .ant-select-selector {
-  border-radius: 16px !important;
-  background: rgba(255, 251, 245, 0.92) !important;
-}
-
-.filter-toolbar__search.ant-input-search .ant-input-affix-wrapper {
-  padding-inline: 14px;
-}
-
-.filter-toolbar__search.ant-input-search .ant-input-group-addon {
-  width: auto;
-}
-
-.filter-toolbar__search.ant-input-search .ant-input-search-button {
-  height: 44px !important;
   min-height: 44px !important;
-  padding-inline: 18px;
   border-radius: 16px !important;
-  margin-left: 8px;
-  border-inline-start: 1px solid transparent !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.filter-toolbar .filter-toolbar__search.ant-input {
+  padding-inline: 14px;
+  border-color: var(--border-soft) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .filter-toolbar__select.ant-select.ant-select-single {
-  height: 44px !important;
+  background: transparent !important;
 }
 
-.filter-toolbar .ant-select.ant-select-single .ant-select-selector,
-.filter-toolbar .ant-select.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+.filter-toolbar .filter-toolbar__select.ant-select.ant-select-single .ant-select-selector,
+.filter-toolbar .filter-toolbar__select.ant-select.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
   padding-inline: 14px !important;
   min-height: 44px !important;
   height: 44px !important;
   display: flex;
   align-items: center;
-  background: rgba(255, 251, 245, 0.92) !important;
+  background: transparent !important;
+  border-color: var(--border-soft) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
 }
 
-.filter-toolbar .ant-select:hover .ant-select-selector,
-.filter-toolbar .ant-select.ant-select-focused .ant-select-selector,
-.filter-toolbar .ant-select.ant-select-open .ant-select-selector {
-  background: rgba(255, 251, 245, 0.92) !important;
+.filter-toolbar .filter-toolbar__search.ant-input:hover,
+.filter-toolbar .filter-toolbar__search.ant-input:focus,
+.filter-toolbar .filter-toolbar__search.ant-input:focus-within,
+.filter-toolbar .filter-toolbar__select.ant-select:hover .ant-select-selector,
+.filter-toolbar .filter-toolbar__select.ant-select.ant-select-focused .ant-select-selector,
+.filter-toolbar .filter-toolbar__select.ant-select.ant-select-open .ant-select-selector {
+  background: transparent !important;
+  border-color: rgba(139, 184, 217, 0.72) !important;
+  box-shadow: none !important;
 }
 
 .filter-toolbar__select.ant-select.ant-select-single .ant-select-selection-wrap,
@@ -531,7 +512,18 @@ img {
 
 .filter-toolbar .ant-btn {
   min-width: 88px;
-  border-radius: 16px;
+  padding-inline: 18px;
+  border-color: var(--border-soft) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.filter-toolbar .ant-btn:hover,
+.filter-toolbar .ant-btn:focus,
+.filter-toolbar .ant-btn:focus-visible {
+  border-color: rgba(139, 184, 217, 0.72) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .content-table .ant-table {
@@ -1169,10 +1161,15 @@ img {
 .ant-input,
 .ant-input-affix-wrapper,
 .ant-picker,
-.ant-select-selector,
 .ant-input-number {
   border-color: var(--border-soft) !important;
   background: rgba(255, 251, 245, 0.92) !important;
+  box-shadow: none !important;
+}
+
+.ant-select-selector {
+  border-color: var(--border-soft) !important;
+  background: #fff !important;
   box-shadow: none !important;
 }
 

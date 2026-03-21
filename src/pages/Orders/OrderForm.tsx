@@ -403,7 +403,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         destroyOnHidden
       >
         <div className="filter-toolbar">
-          <Input.Search
+          <Input
             placeholder="搜索商品名称"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
