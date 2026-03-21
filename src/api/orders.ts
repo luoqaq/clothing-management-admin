@@ -68,7 +68,7 @@ export const ordersApi = {
   },
 
   // 发货
-  shipOrder: async (id: number, shippingInfo: { trackingNumber?: string; shippingCompany?: string }) => {
+  shipOrder: async (id: number, shippingInfo: { trackingNumber: string; shippingCompany: string }) => {
     const response = await api.post<Order>(`/orders/${id}/ship`, shippingInfo);
 
     if (response.success && response.data) {

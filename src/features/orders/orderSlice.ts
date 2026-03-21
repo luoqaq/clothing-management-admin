@@ -93,7 +93,7 @@ export const updateOrderStatus = createAsyncThunk(
 export const shipOrder = createAsyncThunk(
   'orders/shipOrder',
   async (
-    { id, shippingInfo }: { id: number; shippingInfo: { trackingNumber?: string; shippingCompany?: string } },
+    { id, shippingInfo }: { id: number; shippingInfo: { trackingNumber: string; shippingCompany: string } },
     { rejectWithValue }
   ) => {
     try {

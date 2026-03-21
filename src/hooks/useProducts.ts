@@ -7,28 +7,34 @@ import {
   updateProduct,
   deleteProduct,
   fetchCategories,
+  fetchBrands,
   updateProductStock,
   createCategory,
   updateCategory as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
+  createBrand,
+  updateBrand as updateBrandAction,
+  deleteBrand as deleteBrandAction,
   clearCurrentProduct,
   setFilters,
   resetFilters,
   selectProducts,
   selectCurrentProduct,
   selectCategories,
+  selectBrands,
   selectProductLoading,
   selectProductError,
   selectProductPagination,
   selectProductFilters,
 } from '../features/products/productSlice';
-import type { Product, ProductFilters, ProductCategory } from '../types';
+import type { Product, ProductFilters, ProductCategory, ProductBrand } from '../types';
 
 export const useProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
   const products = useSelector(selectProducts);
   const currentProduct = useSelector(selectCurrentProduct);
   const categories = useSelector(selectCategories);
+  const brands = useSelector(selectBrands);
   const loading = useSelector(selectProductLoading);
   const error = useSelector(selectProductError);
   const pagination = useSelector(selectProductPagination);
@@ -94,6 +100,15 @@ export const useProducts = () => {
     }
   };
 
+  const getBrands = async () => {
+    try {
+      const result = await dispatch(fetchBrands()).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
   // 创建分类
   const addCategory = async (category: Omit<ProductCategory, 'id'>) => {
     try {
@@ -118,6 +133,33 @@ export const useProducts = () => {
   const deleteCategory = async (id: number) => {
     try {
       const result = await dispatch(deleteCategoryAction(id)).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const addBrand = async (brand: Omit<ProductBrand, 'id'>) => {
+    try {
+      const result = await dispatch(createBrand(brand)).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const updateBrand = async (id: number, brand: Partial<Omit<ProductBrand, 'id'>>) => {
+    try {
+      const result = await dispatch(updateBrandAction({ id, data: brand })).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const deleteBrand = async (id: number) => {
+    try {
+      const result = await dispatch(deleteBrandAction(id)).unwrap();
       return result;
     } catch (err) {
       return null;
@@ -153,6 +195,7 @@ export const useProducts = () => {
     products,
     currentProduct,
     categories,
+    brands,
     loading,
     error,
     pagination,
@@ -163,10 +206,14 @@ export const useProducts = () => {
     editProduct,
     removeProduct,
     getCategories,
+    getBrands,
     updateStock,
     addCategory,
     updateCategory,
     deleteCategory,
+    addBrand,
+    updateBrand,
+    deleteBrand,
     clearCurrentProduct: handleClearCurrentProduct,
     setFilters: handleSetFilters,
     resetFilters: handleResetFilters,

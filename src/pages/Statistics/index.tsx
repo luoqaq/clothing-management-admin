@@ -229,10 +229,15 @@ const StatisticsPage: React.FC = () => {
       key: 'productName',
     },
     {
-      title: 'SKU',
-      dataIndex: 'sku',
-      key: 'sku',
+      title: '规格编码',
+      dataIndex: 'skuCode',
+      key: 'skuCode',
       render: (text: string) => <span style={{ fontFamily: 'monospace' }}>{text}</span>,
+    },
+    {
+      title: '规格',
+      dataIndex: 'specification',
+      key: 'specification',
     },
     {
       title: '销量',

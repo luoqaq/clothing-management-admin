@@ -70,7 +70,7 @@ export const useOrders = () => {
   };
 
   // 发货
-  const handleShipOrder = async (id: number, shippingInfo: { trackingNumber?: string; shippingCompany?: string }) => {
+  const handleShipOrder = async (id: number, shippingInfo: { trackingNumber: string; shippingCompany: string }) => {
     try {
       const result = await dispatch(shipOrder({ id, shippingInfo })).unwrap();
       return result;

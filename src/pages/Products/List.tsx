@@ -1,38 +1,35 @@
 import { useEffect, useState } from 'react';
 import {
-  Table,
-  Card,
   Button,
-  Space,
-  Input,
-  Select,
-  Tag,
-  Popconfirm,
-  Image,
-  message,
-  Modal,
-  Form,
-  InputNumber,
+  Card,
   Descriptions,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tag,
+  message,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, EyeOutlined, InboxOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { useProducts } from '../../hooks/useProducts';
-import type { Product, ProductFilters, ProductStatus } from '../../types';
 import ProductForm from './ProductForm';
-import { toNumber } from '../../utils/normalize';
-
-const { Search } = Input;
-const { Option } = Select;
+import type { Product, ProductFilters, ProductStatus, ProductSpecification } from '../../types';
 
 const ProductList: React.FC = () => {
   const {
     products,
     categories,
+    brands,
     loading,
     pagination,
     filters,
     getProducts,
     getCategories,
+    getBrands,
     removeProduct,
     updateStock,
     addProduct,
@@ -40,149 +37,133 @@ const ProductList: React.FC = () => {
   } = useProducts();
 
   const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>();
-  const [selectedStatus, setSelectedStatus] = useState<string>();
-  const [selectedSize, setSelectedSize] = useState<string>();
+  const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
+  const [selectedBrand, setSelectedBrand] = useState<number | undefined>();
+  const [selectedStatus, setSelectedStatus] = useState<ProductStatus | undefined>();
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [stockModalVisible, setStockModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [form] = Form.useForm();
-  const [addProductLoading, setAddProductLoading] = useState(false);
-  const formatCurrency = (value: unknown) => `¥${toNumber(value).toFixed(2)}`;
-
-  // 辅助函数：根据 id 获取分类名称
-  const getCategoryName = (categoryId: number) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || '-';
-  };
+  const [selectedSpecification, setSelectedSpecification] = useState<ProductSpecification | null>(null);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [stockForm] = Form.useForm();
 
   useEffect(() => {
-    loadData();
+    void Promise.all([getProducts({ page: 1, pageSize: 10 }), getCategories(), getBrands()]);
   }, []);
 
-  const loadData = async () => {
-    await Promise.all([
-      getProducts({ page: 1, pageSize: 10 }),
-      getCategories(),
-    ]);
-  };
+  const loadProducts = (params?: { page?: number; pageSize?: number; filters?: ProductFilters }) =>
+    getProducts(params ?? { page: pagination.page, pageSize: pagination.pageSize, filters });
 
   const handleSearch = () => {
-    const newFilters: ProductFilters = {};
-    if (searchText) newFilters.search = searchText;
-    if (selectedCategory) newFilters.categoryId = parseInt(selectedCategory);
-    if (selectedStatus) newFilters.status = selectedStatus;
-    if (selectedSize) newFilters.size = selectedSize;
-
-    getProducts({ page: 1, pageSize: 10, filters: newFilters });
+    const nextFilters: ProductFilters = {
+      search: searchText || undefined,
+      categoryId: selectedCategory,
+      brandId: selectedBrand,
+      status: selectedStatus,
+    };
+    void loadProducts({ page: 1, pageSize: 10, filters: nextFilters });
   };
 
   const handleReset = () => {
     setSearchText('');
     setSelectedCategory(undefined);
+    setSelectedBrand(undefined);
     setSelectedStatus(undefined);
-    setSelectedSize(undefined);
-    getProducts({ page: 1, pageSize: 10 });
-  };
-
-  const handlePageChange = (page: number, pageSize: number) => {
-    getProducts({ page, pageSize, filters });
+    void loadProducts({ page: 1, pageSize: 10, filters: {} });
   };
 
   const handleDelete = async (id: number) => {
     const result = await removeProduct(id);
     if (result) {
       message.success('商品删除成功');
-      getProducts({ page: pagination.page, pageSize: pagination.pageSize, filters });
+      void loadProducts();
     }
   };
 
-  const handleViewProduct = (product: Product) => {
+  const handleEditStock = (product: Product, specification: ProductSpecification) => {
     setSelectedProduct(product);
-    setViewModalVisible(true);
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setEditModalVisible(true);
-  };
-
-  const handleEditStock = (product: Product) => {
-    setSelectedProduct(product);
-    form.setFieldsValue({ stock: product.stock });
+    setSelectedSpecification(specification);
+    stockForm.setFieldsValue({ stock: specification.stock });
     setStockModalVisible(true);
   };
 
   const handleStockSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      if (!selectedProduct) return;
+    const values = await stockForm.validateFields();
+    if (!selectedSpecification) return;
 
-      const result = await updateStock(selectedProduct.id, values.stock);
+    const result = await updateStock(selectedSpecification.id, values.stock);
+    if (result) {
+      message.success('规格库存更新成功');
+      setStockModalVisible(false);
+      setSelectedSpecification(null);
+      void loadProducts();
+    }
+  };
+
+  const handleAddSubmit = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    setSaveLoading(true);
+    try {
+      const result = await addProduct(product);
       if (result) {
-        message.success('库存更新成功');
-        setStockModalVisible(false);
-        setSelectedProduct(null);
-        getProducts({ page: pagination.page, pageSize: pagination.pageSize, filters });
+        message.success('商品创建成功');
+        setAddModalVisible(false);
+        void loadProducts();
       }
-    } catch (error) {
-      console.error('Validation failed:', error);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleEditSubmit = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!selectedProduct) return;
+    setSaveLoading(true);
+    try {
+      const result = await editProduct(selectedProduct.id, product);
+      if (result) {
+        message.success('商品更新成功');
+        setEditModalVisible(false);
+        setSelectedProduct(null);
+        void loadProducts();
+      }
+    } finally {
+      setSaveLoading(false);
     }
   };
 
   const columns = [
     {
-      title: '商品图片',
-      dataIndex: 'images',
-      key: 'images',
-      width: 80,
-      render: (images: string[]) => (
-        images?.[0] ? (
-          <Image
-            src={images[0]}
-            alt="商品图片"
-            width={60}
-            height={60}
-            style={{ borderRadius: 4, objectFit: 'cover' }}
-          />
-        ) : (
-          <InboxOutlined style={{ fontSize: 40, color: '#d9d9d9' }} />
-        )
+      title: '商品',
+      key: 'product',
+      render: (_: unknown, record: Product) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{record.name}</div>
+          <div style={{ color: '#8c8c8c' }}>{record.brand?.name || '未设置品牌'}</div>
+        </div>
       ),
-    },
-    {
-      title: '商品名称',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: '尺寸',
-      dataIndex: 'size',
-      key: 'size',
-      width: 100,
     },
     {
       title: '分类',
+      dataIndex: ['category', 'name'],
       key: 'category',
-      render: (_: any, record: Product) => getCategoryName(record.categoryId),
+      render: (_: unknown, record: Product) => record.category?.name || '-',
     },
     {
-      title: '价格',
-      dataIndex: 'price',
-      key: 'price',
-      render: (price: number) => formatCurrency(price),
+      title: '规格数',
+      dataIndex: 'specCount',
+      key: 'specCount',
+      render: (value: number) => `${value} 个规格`,
     },
     {
-      title: '库存',
-      dataIndex: 'stock',
-      key: 'stock',
-      render: (stock: number, record: Product) => (
-        <Tag color={stock > 50 ? 'green' : stock > 10 ? 'orange' : 'red'}>
-          {stock}
-        </Tag>
-      ),
+      title: '总库存',
+      dataIndex: 'totalStock',
+      key: 'totalStock',
+    },
+    {
+      title: '售价范围',
+      key: 'priceRange',
+      render: (_: unknown, record: Product) => `¥${record.minPrice.toFixed(2)} - ¥${record.maxPrice.toFixed(2)}`,
     },
     {
       title: '状态',
@@ -190,36 +171,27 @@ const ProductList: React.FC = () => {
       key: 'status',
       render: (status: ProductStatus) => {
         const statusMap: Record<ProductStatus, { text: string; color: string }> = {
+          draft: { text: '草稿', color: 'default' },
           active: { text: '上架中', color: 'green' },
-          inactive: { text: '已下架', color: 'default' },
-          out_of_stock: { text: '缺货', color: 'red' },
+          inactive: { text: '已下架', color: 'orange' },
         };
-        const statusInfo = statusMap[status];
-        return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>;
+        const meta = statusMap[status];
+        return <Tag color={meta.color}>{meta.text}</Tag>;
       },
     },
     {
       title: '操作',
       key: 'actions',
-      render: (_, record: Product) => (
-        <Space size="small">
-          <Button type="text" icon={<EyeOutlined />} size="small" onClick={() => handleViewProduct(record)}>
+      render: (_: unknown, record: Product) => (
+        <Space>
+          <Button type="text" icon={<EyeOutlined />} onClick={() => { setSelectedProduct(record); setViewModalVisible(true); }}>
             查看
           </Button>
-          <Button type="text" icon={<EditOutlined />} size="small" onClick={() => handleEditProduct(record)}>
+          <Button type="text" icon={<EditOutlined />} onClick={() => { setSelectedProduct(record); setEditModalVisible(true); }}>
             编辑
           </Button>
-          <Button type="text" size="small" onClick={() => handleEditStock(record)}>
-            库存
-          </Button>
-          <Popconfirm
-            title="确定删除此商品吗？"
-            description="删除后数据将无法恢复"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small">
+          <Popconfirm title="确定删除这款商品吗？" onConfirm={() => handleDelete(record.id)}>
+            <Button type="text" danger icon={<DeleteOutlined />}>
               删除
             </Button>
           </Popconfirm>
@@ -228,275 +200,140 @@ const ProductList: React.FC = () => {
     },
   ];
 
-  const handleAddProduct = () => {
-    setAddModalVisible(true);
-  };
-
-  const handleAddSubmit = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
-    setAddProductLoading(true);
-    try {
-      const result = await addProduct(product);
-      if (result) {
-        message.success('商品创建成功');
-        setAddModalVisible(false);
-        getProducts({ page: pagination.page, pageSize: pagination.pageSize, filters });
-      }
-    } catch (error) {
-      console.error('Create product error:', error);
-    } finally {
-      setAddProductLoading(false);
-    }
-  };
-
-  const handleAddCancel = () => {
-    setAddModalVisible(false);
-  };
-
-  const handleEditSubmit = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!selectedProduct) return;
-    setAddProductLoading(true);
-    try {
-      const result = await editProduct(selectedProduct.id, product);
-      if (result) {
-        message.success('商品更新成功');
-        setEditModalVisible(false);
-        getProducts({ page: pagination.page, pageSize: pagination.pageSize, filters });
-      }
-    } catch (error) {
-      console.error('Update product error:', error);
-    } finally {
-      setAddProductLoading(false);
-    }
-  };
-
-  const handleEditCancel = () => {
-    setEditModalVisible(false);
-  };
-
   return (
     <div>
       <Card
         title="商品管理"
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct}>
-            新增商品
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
+            新建商品
           </Button>
         }
       >
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Search
+        <Space wrap style={{ marginBottom: 16 }}>
+          <Input.Search
             placeholder="搜索商品名称"
-            allowClear
-            style={{ width: 250 }}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onSearch={handleSearch}
+            style={{ width: 240 }}
           />
           <Select
-            placeholder="选择分类"
-            style={{ width: 150 }}
             allowClear
+            placeholder="分类"
+            style={{ width: 160 }}
             value={selectedCategory}
+            options={categories.map((item) => ({ label: item.name, value: item.id }))}
             onChange={setSelectedCategory}
-          >
-            {categories.map((category) => (
-              <Option key={category.id} value={category.id}>
-                {category.name}
-              </Option>
-            ))}
-          </Select>
+          />
           <Select
-            placeholder="选择状态"
-            style={{ width: 120 }}
             allowClear
+            placeholder="品牌"
+            style={{ width: 160 }}
+            value={selectedBrand}
+            options={brands.map((item) => ({ label: item.name, value: item.id }))}
+            onChange={setSelectedBrand}
+          />
+          <Select
+            allowClear
+            placeholder="状态"
+            style={{ width: 160 }}
             value={selectedStatus}
+            options={[
+              { label: '草稿', value: 'draft' },
+              { label: '上架中', value: 'active' },
+              { label: '已下架', value: 'inactive' },
+            ]}
             onChange={setSelectedStatus}
-          >
-            <Option value="active">上架中</Option>
-            <Option value="inactive">已下架</Option>
-            <Option value="out_of_stock">缺货</Option>
-          </Select>
-          <Select
-            placeholder="选择尺寸"
-            style={{ width: 120 }}
-            allowClear
-            value={selectedSize}
-            onChange={setSelectedSize}
-          >
-            <Option value="XS">XS</Option>
-            <Option value="S">S</Option>
-            <Option value="M">M</Option>
-            <Option value="L">L</Option>
-            <Option value="XL">XL</Option>
-            <Option value="XXL">XXL</Option>
-            <Option value="3XL">3XL</Option>
-          </Select>
-          <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-            搜索
-          </Button>
+          />
+          <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
-        </div>
+        </Space>
 
         <Table
-          columns={columns}
-          dataSource={products}
           rowKey="id"
           loading={loading}
+          columns={columns}
+          dataSource={products}
           pagination={{
             current: pagination.page,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
-            onChange: handlePageChange,
+            onChange: (page, pageSize) => void loadProducts({ page, pageSize, filters }),
           }}
         />
       </Card>
 
-      <Modal
-        title="修改库存"
-        open={stockModalVisible}
-        onOk={handleStockSubmit}
-        onCancel={() => {
-          setStockModalVisible(false);
-          setSelectedProduct(null);
-        }}
-        destroyOnHidden
-      >
+      <Modal open={viewModalVisible} title="商品详情" footer={null} onCancel={() => setViewModalVisible(false)} width={960}>
         {selectedProduct && (
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>商品：</strong>{selectedProduct.name}
-            </div>
-            <Form form={form} layout="vertical">
-              <Form.Item
-                name="stock"
-                label="库存数量"
-                rules={[{ required: true, message: '请输入库存数量' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Form>
-          </div>
-        )}
-      </Modal>
-
-      <Modal
-        title="新增商品"
-        open={addModalVisible}
-        onCancel={handleAddCancel}
-        footer={null}
-        width={800}
-        destroyOnHidden
-      >
-        <ProductForm
-          categories={categories}
-          onSubmit={handleAddSubmit}
-          onCancel={handleAddCancel}
-          loading={addProductLoading}
-        />
-      </Modal>
-
-      {/* 查看商品模态框 */}
-      <Modal
-        title="商品详情"
-        open={viewModalVisible}
-        onCancel={() => {
-          setViewModalVisible(false);
-          setSelectedProduct(null);
-        }}
-        footer={[
-          <Button key="close" onClick={() => setViewModalVisible(false)}>
-            关闭
-          </Button>,
-        ]}
-        width={800}
-      >
-        {selectedProduct && (
-          <div>
-            <div style={{ marginBottom: 24 }}>
-              {selectedProduct.images?.[0] ? (
-                <img
-                  src={selectedProduct.images[0]}
-                  alt={selectedProduct.name}
-                  style={{ width: 200, height: 200, objectFit: 'cover', borderRadius: 8 }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 200,
-                    height: 200,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: 8,
-                  }}
-                >
-                  <InboxOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
-                </div>
-              )}
-            </div>
-            <Descriptions bordered column={2}>
-              <Descriptions.Item label="商品名称" span={2}>
-                {selectedProduct.name}
+          <>
+            <Descriptions bordered column={2} style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="商品名称">{selectedProduct.name}</Descriptions.Item>
+              <Descriptions.Item label="商品状态">
+                {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
               </Descriptions.Item>
-              <Descriptions.Item label="分类">
-                {getCategoryName(selectedProduct.categoryId)}
-              </Descriptions.Item>
-              <Descriptions.Item label="尺寸">
-                {selectedProduct.size}
-              </Descriptions.Item>
-              <Descriptions.Item label="销售价格">
-                {formatCurrency(selectedProduct.price)}
-              </Descriptions.Item>
-              <Descriptions.Item label="成本价格">
-                {formatCurrency(selectedProduct.costPrice)}
-              </Descriptions.Item>
-              <Descriptions.Item label="库存">
-                <Tag color={selectedProduct.stock > 50 ? 'green' : selectedProduct.stock > 10 ? 'orange' : 'red'}>
-                  {selectedProduct.stock}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="状态">
-                {(() => {
-                  const statusMap: Record<ProductStatus, { text: string; color: string }> = {
-                    active: { text: '上架中', color: 'green' },
-                    inactive: { text: '已下架', color: 'default' },
-                    out_of_stock: { text: '缺货', color: 'red' },
-                  };
-                  const statusInfo = statusMap[selectedProduct.status];
-                  return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>;
-                })()}
-              </Descriptions.Item>
-              <Descriptions.Item label="创建时间" span={2}>
-                {new Date(selectedProduct.createdAt).toLocaleString()}
-              </Descriptions.Item>
+              <Descriptions.Item label="分类">{selectedProduct.category?.name || '-'}</Descriptions.Item>
+              <Descriptions.Item label="品牌">{selectedProduct.brand?.name || '-'}</Descriptions.Item>
+              <Descriptions.Item label="规格数">{selectedProduct.specCount}</Descriptions.Item>
+              <Descriptions.Item label="总库存">{selectedProduct.totalStock}</Descriptions.Item>
+              <Descriptions.Item label="售价范围">{`¥${selectedProduct.minPrice.toFixed(2)} - ¥${selectedProduct.maxPrice.toFixed(2)}`}</Descriptions.Item>
+              <Descriptions.Item label="标签">{selectedProduct.tags.join('，') || '-'}</Descriptions.Item>
+              <Descriptions.Item label="描述" span={2}>{selectedProduct.description || '-'}</Descriptions.Item>
             </Descriptions>
-          </div>
+            <Table
+              rowKey="id"
+              pagination={false}
+              title={() => '规格明细'}
+              dataSource={selectedProduct.specifications}
+              columns={[
+                { title: '规格', key: 'specification', render: (_, item: ProductSpecification) => `${item.color} / ${item.size}` },
+                { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode' },
+                { title: '售价', dataIndex: 'salePrice', key: 'salePrice', render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '成本价', dataIndex: 'costPrice', key: 'costPrice', render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '库存', dataIndex: 'stock', key: 'stock' },
+                { title: '占用', dataIndex: 'reservedStock', key: 'reservedStock' },
+                { title: '可售', dataIndex: 'availableStock', key: 'availableStock' },
+                {
+                  title: '操作',
+                  key: 'actions',
+                  render: (_, specification: ProductSpecification) => (
+                    <Button type="link" onClick={() => handleEditStock(selectedProduct, specification)}>
+                      调整库存
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          </>
         )}
       </Modal>
 
-      {/* 编辑商品模态框 */}
-      <Modal
-        title="编辑商品"
-        open={editModalVisible}
-        onCancel={handleEditCancel}
-        footer={null}
-        width={800}
-        destroyOnHidden
-      >
+      <Modal open={addModalVisible} title="新建商品" footer={null} onCancel={() => setAddModalVisible(false)} width={1100} destroyOnHidden>
+        <ProductForm categories={categories} brands={brands} onSubmit={handleAddSubmit} onCancel={() => setAddModalVisible(false)} loading={saveLoading} />
+      </Modal>
+
+      <Modal open={editModalVisible} title="编辑商品" footer={null} onCancel={() => setEditModalVisible(false)} width={1100} destroyOnHidden>
         {selectedProduct && (
           <ProductForm
             categories={categories}
-            onSubmit={handleEditSubmit}
-            onCancel={handleEditCancel}
-            loading={addProductLoading}
+            brands={brands}
             product={selectedProduct}
+            onSubmit={handleEditSubmit}
+            onCancel={() => setEditModalVisible(false)}
+            loading={saveLoading}
           />
         )}
+      </Modal>
+
+      <Modal open={stockModalVisible} title="调整规格库存" onOk={() => void handleStockSubmit()} onCancel={() => setStockModalVisible(false)}>
+        <Form form={stockForm} layout="vertical">
+          <Form.Item label="规格">
+            <Input value={selectedSpecification ? `${selectedSpecification.color} / ${selectedSpecification.size}` : ''} disabled />
+          </Form.Item>
+          <Form.Item name="stock" label="库存数量" rules={[{ required: true, message: '请输入库存数量' }]}>
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

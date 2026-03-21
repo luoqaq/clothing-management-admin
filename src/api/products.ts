@@ -1,5 +1,11 @@
 import { api } from './index';
-import type { Product, ProductCategory, ProductBrand, PaginatedResponse, ProductFilters } from '../types';
+import type {
+  Product,
+  ProductCategory,
+  ProductBrand,
+  PaginatedResponse,
+  ProductFilters,
+} from '../types';
 import { normalizeProduct } from '../utils/normalize';
 
 export const productsApi = {
@@ -114,7 +120,7 @@ export const productsApi = {
 
   // 更新库存
   updateStock: async (id: number, stock: number) => {
-    const response = await api.patch<Product>(`/products/${id}/stock`, { stock });
+    const response = await api.patch<Product>(`/products/specifications/${id}/stock`, { stock });
 
     if (response.success && response.data) {
       return {

@@ -1,34 +1,10 @@
 import { useEffect, useState } from 'react';
-import {
-  Table,
-  Card,
-  Button,
-  Space,
-  Input,
-  Select,
-  Tag,
-  Popconfirm,
-  message,
-  Modal,
-  Descriptions,
-  Image,
-  Timeline,
-} from 'antd';
-import {
-  PlusOutlined,
-  SearchOutlined,
-  EyeOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  DollarOutlined,
-} from '@ant-design/icons';
-import { useOrders } from '../../hooks/useOrders';
-import type { Order, OrderFilters, OrderStatus } from '../../types';
+import { Button, Card, Descriptions, Form, Input, Modal, Select, Space, Table, Tag, message } from 'antd';
+import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import type { Order, OrderFilters, OrderStatus } from '../../types';
+import { useOrders } from '../../hooks/useOrders';
 import OrderForm from './OrderForm';
-
-const { Search } = Input;
-const { Option } = Select;
 
 const OrderList: React.FC = () => {
   const {
@@ -43,127 +19,119 @@ const OrderList: React.FC = () => {
     cancelOrder,
     shipOrder,
     refundOrder,
-    clearCurrentOrder,
     addOrder,
   } = useOrders();
 
   const [searchText, setSearchText] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>();
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>();
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [actionModalVisible, setActionModalVisible] = useState(false);
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [currentAction, setCurrentAction] = useState<'ship' | 'cancel' | 'refund'>();
-  const [addOrderLoading, setAddOrderLoading] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | undefined>();
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string | undefined>();
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [addVisible, setAddVisible] = useState(false);
+  const [shipVisible, setShipVisible] = useState(false);
+  const [refundVisible, setRefundVisible] = useState(false);
+  const [cancelVisible, setCancelVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [shipForm] = Form.useForm();
+  const [refundForm] = Form.useForm();
+  const [cancelForm] = Form.useForm();
 
   useEffect(() => {
-    loadData();
+    void getOrders({ page: 1, pageSize: 10 });
   }, []);
 
-  const loadData = async () => {
-    await getOrders({ page: 1, pageSize: 10 });
-  };
+  const reload = (params?: { page?: number; pageSize?: number; filters?: OrderFilters }) =>
+    getOrders(params ?? { page: pagination.page, pageSize: pagination.pageSize, filters });
 
   const handleSearch = () => {
-    const newFilters: OrderFilters = {};
-    if (searchText) newFilters.search = searchText;
-    if (selectedStatus) newFilters.status = selectedStatus as OrderStatus;
-    if (selectedPaymentStatus) newFilters.paymentStatus = selectedPaymentStatus;
-
-    getOrders({ page: 1, pageSize: 10, filters: newFilters });
+    void reload({
+      page: 1,
+      pageSize: 10,
+      filters: {
+        search: searchText || undefined,
+        status: selectedStatus,
+        paymentStatus: selectedPaymentStatus,
+      },
+    });
   };
 
   const handleReset = () => {
     setSearchText('');
     setSelectedStatus(undefined);
     setSelectedPaymentStatus(undefined);
-    getOrders({ page: 1, pageSize: 10 });
-  };
-
-  const handlePageChange = (page: number, pageSize: number) => {
-    getOrders({ page, pageSize, filters });
+    void reload({ page: 1, pageSize: 10, filters: {} });
   };
 
   const handleViewDetail = async (id: number) => {
     const result = await getOrderById(id);
     if (result) {
-      setDetailModalVisible(true);
+      setDetailVisible(true);
     }
   };
 
-  const handleCancelOrder = async (order: Order) => {
-    setCurrentAction('cancel');
-    setActionModalVisible(true);
-    const result = await cancelOrder(order.id);
-    if (result) {
-      message.success('订单已取消');
-      setActionModalVisible(false);
-      getOrders({ page: pagination.page, pageSize: pagination.pageSize, filters });
+  const handleCreateOrder = async (order: Omit<Order, 'id' | 'orderNo' | 'createdAt' | 'updatedAt'>) => {
+    setSubmitLoading(true);
+    try {
+      const result = await addOrder(order);
+      if (result) {
+        message.success('订单创建成功');
+        setAddVisible(false);
+        void reload();
+      }
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
-  const handleShipOrder = async (order: Order) => {
-    setCurrentAction('ship');
-    setActionModalVisible(true);
-    const result = await shipOrder(order.id, {});
+  const openShipModal = (order: Order) => {
+    setSelectedOrder(order);
+    shipForm.setFieldsValue({ shippingCompany: order.shippingCompany, trackingNumber: order.trackingNumber });
+    setShipVisible(true);
+  };
+
+  const openRefundModal = (order: Order) => {
+    setSelectedOrder(order);
+    refundForm.setFieldsValue({ amount: order.finalAmount, reason: order.refundReason });
+    setRefundVisible(true);
+  };
+
+  const openCancelModal = (order: Order) => {
+    setSelectedOrder(order);
+    cancelForm.setFieldsValue({ reason: order.cancelReason });
+    setCancelVisible(true);
+  };
+
+  const submitShip = async () => {
+    if (!selectedOrder) return;
+    const values = await shipForm.validateFields();
+    const result = await shipOrder(selectedOrder.id, values);
     if (result) {
       message.success('订单已发货');
-      setActionModalVisible(false);
-      getOrders({ page: pagination.page, pageSize: pagination.pageSize, filters });
+      setShipVisible(false);
+      void reload();
     }
   };
 
-  const handleRefundOrder = async (order: Order) => {
-    setCurrentAction('refund');
-    setActionModalVisible(true);
-    const result = await refundOrder(order.id, { amount: order.finalAmount });
+  const submitRefund = async () => {
+    if (!selectedOrder) return;
+    const values = await refundForm.validateFields();
+    const result = await refundOrder(selectedOrder.id, values);
     if (result) {
       message.success('退款已处理');
-      setActionModalVisible(false);
-      getOrders({ page: pagination.page, pageSize: pagination.pageSize, filters });
+      setRefundVisible(false);
+      void reload();
     }
   };
 
-  const getStatusColor = (status: OrderStatus) => {
-    const colorMap: Record<OrderStatus, string> = {
-      pending: 'orange',
-      confirmed: 'blue',
-      shipped: 'cyan',
-      delivered: 'green',
-      cancelled: 'default',
-      refunded: 'red',
-    };
-    return colorMap[status];
-  };
-
-  const getStatusText = (status: OrderStatus) => {
-    const textMap: Record<OrderStatus, string> = {
-      pending: '待处理',
-      confirmed: '已确认',
-      shipped: '已发货',
-      delivered: '已送达',
-      cancelled: '已取消',
-      refunded: '已退款',
-    };
-    return textMap[status];
-  };
-
-  const getPaymentStatusColor = (status: string) => {
-    const colorMap: Record<string, string> = {
-      unpaid: 'orange',
-      paid: 'green',
-      refunded: 'red',
-    };
-    return colorMap[status] || 'default';
-  };
-
-  const getPaymentStatusText = (status: string) => {
-    const textMap: Record<string, string> = {
-      unpaid: '待支付',
-      paid: '已支付',
-      refunded: '已退款',
-    };
-    return textMap[status] || status;
+  const submitCancel = async () => {
+    if (!selectedOrder) return;
+    const values = await cancelForm.validateFields();
+    const result = await cancelOrder(selectedOrder.id, values.reason);
+    if (result) {
+      message.success('订单已取消');
+      setCancelVisible(false);
+      void reload();
+    }
   };
 
   const columns = [
@@ -175,128 +143,86 @@ const OrderList: React.FC = () => {
     },
     {
       title: '客户信息',
-      dataIndex: 'customerName',
       key: 'customer',
-      render: (text: string, record: Order) => (
+      render: (_: unknown, record: Order) => (
         <div>
-          <div>{text}</div>
-          <div style={{ fontSize: 12, color: '#999' }}>{record.customerPhone}</div>
+          <div>{record.customerName}</div>
+          <div style={{ color: '#8c8c8c' }}>{record.customerPhone}</div>
         </div>
       ),
     },
     {
-      title: '商品信息',
+      title: '商品规格',
       dataIndex: 'items',
       key: 'items',
       render: (items: Order['items']) => (
         <div>
-          <div>{items.length} 件商品</div>
-          <div style={{ fontSize: 12, color: '#999' }}>
-            {items.slice(0, 2).map((item, index) => (
-              <span key={item.id}>
-                {index > 0 && ', '}
-                {item.productName}
-              </span>
-            ))}
-            {items.length > 2 && '...'}
+          <div>{items.length} 个规格</div>
+          <div style={{ color: '#8c8c8c' }}>
+            {items.slice(0, 2).map((item) => `${item.productName} (${item.color} / ${item.size})`).join('，')}
           </div>
         </div>
       ),
     },
     {
-      title: '金额',
+      title: '订单金额',
       dataIndex: 'finalAmount',
       key: 'finalAmount',
-      render: (amount: number, record: Order) => (
-        <div>
-          <div style={{ fontWeight: 500 }}>¥{amount.toFixed(2)}</div>
-          {record.discountAmount > 0 && (
-            <div style={{ fontSize: 12, color: '#999', textDecoration: 'line-through' }}>
-              ¥{record.totalAmount.toFixed(2)}
-            </div>
-          )}
-        </div>
-      ),
+      render: (amount: number) => `¥${amount.toFixed(2)}`,
     },
     {
       title: '订单状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status: OrderStatus) => (
-        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
-      ),
+      render: (status: OrderStatus) => {
+        const mapping: Record<OrderStatus, { text: string; color: string }> = {
+          pending: { text: '待处理', color: 'orange' },
+          confirmed: { text: '已确认', color: 'blue' },
+          shipped: { text: '已发货', color: 'cyan' },
+          delivered: { text: '已送达', color: 'green' },
+          cancelled: { text: '已取消', color: 'default' },
+          refunded: { text: '已退款', color: 'red' },
+        };
+        return <Tag color={mapping[status].color}>{mapping[status].text}</Tag>;
+      },
     },
     {
       title: '支付状态',
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
-      render: (status: string) => (
-        <Tag color={getPaymentStatusColor(status)}>{getPaymentStatusText(status)}</Tag>
-      ),
+      render: (status: string) => <Tag color={status === 'paid' ? 'green' : status === 'refunded' ? 'red' : 'orange'}>{status === 'paid' ? '已支付' : status === 'refunded' ? '已退款' : '待支付'}</Tag>,
     },
     {
       title: '下单时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
+      render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
     },
     {
       title: '操作',
       key: 'actions',
-      render: (_, record: Order) => (
+      render: (_: unknown, record: Order) => (
         <Space size="small">
-          <Button
-            type="text"
-            icon={<EyeOutlined />}
-            size="small"
-            onClick={() => handleViewDetail(record.id)}
-          >
+          <Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.id)}>
             查看
           </Button>
-
           {record.status === 'pending' && (
-            <Button
-              type="text"
-              icon={<CheckOutlined />}
-              size="small"
-              onClick={() => updateOrderStatus(record.id, 'confirmed')}
-            >
+            <Button type="text" icon={<CheckOutlined />} onClick={() => void updateOrderStatus(record.id, 'confirmed')}>
               确认
             </Button>
           )}
-
           {record.status === 'confirmed' && (
-            <Button
-              type="text"
-              icon={<CheckOutlined />}
-              size="small"
-              onClick={() => handleShipOrder(record)}
-            >
+            <Button type="text" icon={<CheckOutlined />} onClick={() => openShipModal(record)}>
               发货
             </Button>
           )}
-
           {(record.status === 'pending' || record.status === 'confirmed') && (
-            <Popconfirm
-              title="确定取消此订单吗？"
-              onConfirm={() => handleCancelOrder(record)}
-              okText="确定"
-              cancelText="取消"
-            >
-              <Button type="text" danger icon={<CloseOutlined />} size="small">
-                取消
-              </Button>
-            </Popconfirm>
+            <Button type="text" danger icon={<CloseOutlined />} onClick={() => openCancelModal(record)}>
+              取消
+            </Button>
           )}
-
-          {record.status === 'delivered' && record.paymentStatus === 'paid' && (
-            <Button
-              type="text"
-              danger
-              icon={<DollarOutlined />}
-              size="small"
-              onClick={() => handleRefundOrder(record)}
-            >
+          {(record.status === 'shipped' || record.status === 'delivered') && record.paymentStatus === 'paid' && (
+            <Button type="text" danger icon={<DollarOutlined />} onClick={() => openRefundModal(record)}>
               退款
             </Button>
           )}
@@ -305,256 +231,134 @@ const OrderList: React.FC = () => {
     },
   ];
 
-  const handleAddOrder = () => {
-    setAddModalVisible(true);
-  };
-
-  const handleAddOrderSubmit = async (order: Omit<Order, 'id' | 'orderNo' | 'createdAt' | 'updatedAt'>) => {
-    setAddOrderLoading(true);
-    try {
-      const result = await addOrder(order);
-      if (result) {
-        message.success('订单创建成功');
-        setAddModalVisible(false);
-        getOrders({ page: pagination.page, pageSize: pagination.pageSize, filters });
-      }
-    } catch (error) {
-      console.error('Create order error:', error);
-    } finally {
-      setAddOrderLoading(false);
-    }
-  };
-
-  const handleAddOrderCancel = () => {
-    setAddModalVisible(false);
-  };
-
   return (
     <div>
       <Card
         title="订单管理"
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddOrder}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddVisible(true)}>
             新建订单
           </Button>
         }
       >
-        <div style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Search
+        <Space wrap style={{ marginBottom: 16 }}>
+          <Input.Search
             placeholder="搜索订单号、客户名、电话"
-            allowClear
-            style={{ width: 250 }}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onSearch={handleSearch}
+            style={{ width: 260 }}
           />
           <Select
-            placeholder="订单状态"
-            style={{ width: 150 }}
             allowClear
+            placeholder="订单状态"
+            style={{ width: 160 }}
             value={selectedStatus}
             onChange={setSelectedStatus}
-          >
-            <Option value="pending">待处理</Option>
-            <Option value="confirmed">已确认</Option>
-            <Option value="shipped">已发货</Option>
-            <Option value="delivered">已送达</Option>
-            <Option value="cancelled">已取消</Option>
-            <Option value="refunded">已退款</Option>
-          </Select>
+            options={[
+              { label: '待处理', value: 'pending' },
+              { label: '已确认', value: 'confirmed' },
+              { label: '已发货', value: 'shipped' },
+              { label: '已送达', value: 'delivered' },
+              { label: '已取消', value: 'cancelled' },
+              { label: '已退款', value: 'refunded' },
+            ]}
+          />
           <Select
-            placeholder="支付状态"
-            style={{ width: 120 }}
             allowClear
+            placeholder="支付状态"
+            style={{ width: 160 }}
             value={selectedPaymentStatus}
             onChange={setSelectedPaymentStatus}
-          >
-            <Option value="unpaid">待支付</Option>
-            <Option value="paid">已支付</Option>
-            <Option value="refunded">已退款</Option>
-          </Select>
-          <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-            搜索
-          </Button>
+            options={[
+              { label: '待支付', value: 'unpaid' },
+              { label: '已支付', value: 'paid' },
+              { label: '已退款', value: 'refunded' },
+            ]}
+          />
+          <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
-        </div>
+        </Space>
 
         <Table
-          columns={columns}
-          dataSource={orders}
           rowKey="id"
           loading={loading}
+          columns={columns}
+          dataSource={orders}
           pagination={{
             current: pagination.page,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
-            onChange: handlePageChange,
+            onChange: (page, pageSize) => void reload({ page, pageSize, filters }),
           }}
         />
       </Card>
 
-      <Modal
-        title="订单详情"
-        open={detailModalVisible}
-        onCancel={() => {
-          setDetailModalVisible(false);
-          clearCurrentOrder();
-        }}
-        footer={[
-          <Button key="close" onClick={() => setDetailModalVisible(false)}>
-            关闭
-          </Button>,
-        ]}
-        width={800}
-        destroyOnHidden
-      >
+      <Modal open={addVisible} title="新建订单" footer={null} width={1100} onCancel={() => setAddVisible(false)} destroyOnHidden>
+        <OrderForm onSubmit={handleCreateOrder} onCancel={() => setAddVisible(false)} loading={submitLoading} />
+      </Modal>
+
+      <Modal open={detailVisible} title="订单详情" footer={null} onCancel={() => setDetailVisible(false)} width={960}>
         {currentOrder && (
-          <div>
-            <Descriptions title="订单信息" bordered column={2}>
-              <Descriptions.Item label="订单号" span={1}>
-                {currentOrder.orderNo}
-              </Descriptions.Item>
-              <Descriptions.Item label="订单状态" span={1}>
-                <Tag color={getStatusColor(currentOrder.status)}>
-                  {getStatusText(currentOrder.status)}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="客户姓名" span={1}>
-                {currentOrder.customerName}
-              </Descriptions.Item>
-              <Descriptions.Item label="联系电话" span={1}>
-                {currentOrder.customerPhone}
-              </Descriptions.Item>
-              <Descriptions.Item label="支付状态" span={1}>
-                <Tag color={getPaymentStatusColor(currentOrder.paymentStatus)}>
-                  {getPaymentStatusText(currentOrder.paymentStatus)}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="支付方式" span={1}>
-                {currentOrder.paymentMethod}
-              </Descriptions.Item>
-              <Descriptions.Item label="下单时间" span={1}>
-                {dayjs(currentOrder.createdAt).format('YYYY-MM-DD HH:mm:ss')}
-              </Descriptions.Item>
-              {currentOrder.shippedAt && (
-                <Descriptions.Item label="发货时间" span={1}>
-                  {dayjs(currentOrder.shippedAt).format('YYYY-MM-DD HH:mm:ss')}
-                </Descriptions.Item>
-              )}
-              {currentOrder.deliveredAt && (
-                <Descriptions.Item label="送达时间" span={1}>
-                  {dayjs(currentOrder.deliveredAt).format('YYYY-MM-DD HH:mm:ss')}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-
-            <Descriptions title="收货地址" bordered column={1} style={{ marginTop: 16 }}>
-              <Descriptions.Item label="收货人">
-                {currentOrder.address.name} {currentOrder.address.phone}
-              </Descriptions.Item>
-              <Descriptions.Item label="收货地址">
-                {currentOrder.address.province}
-                {currentOrder.address.city}
-                {currentOrder.address.district}
-                {currentOrder.address.detail}
-                {currentOrder.address.postalCode && ` (${currentOrder.address.postalCode})`}
+          <>
+            <Descriptions bordered column={2} style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="订单号">{currentOrder.orderNo}</Descriptions.Item>
+              <Descriptions.Item label="订单状态">{currentOrder.status}</Descriptions.Item>
+              <Descriptions.Item label="客户姓名">{currentOrder.customerName}</Descriptions.Item>
+              <Descriptions.Item label="联系电话">{currentOrder.customerPhone}</Descriptions.Item>
+              <Descriptions.Item label="支付方式">{currentOrder.paymentMethod || '-'}</Descriptions.Item>
+              <Descriptions.Item label="支付状态">{currentOrder.paymentStatus}</Descriptions.Item>
+              <Descriptions.Item label="物流公司">{currentOrder.shippingCompany || '-'}</Descriptions.Item>
+              <Descriptions.Item label="运单号">{currentOrder.trackingNumber || '-'}</Descriptions.Item>
+              <Descriptions.Item label="收货地址" span={2}>
+                {`${currentOrder.address.province}${currentOrder.address.city}${currentOrder.address.district}${currentOrder.address.detail}`}
               </Descriptions.Item>
             </Descriptions>
-
-            <Card title="商品列表" style={{ marginTop: 16 }}>
-              {currentOrder.items.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '12px 0',
-                    borderBottom: '1px solid #f0f0f0',
-                  }}
-                >
-                  {item.image && (
-                    <Image
-                      src={item.image}
-                      width={60}
-                      height={60}
-                      style={{ borderRadius: 4, marginRight: 12 }}
-                    />
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500 }}>{item.productName}</div>
-                    <div style={{ fontSize: 12, color: '#999' }}>
-                      {item.sku}
-                      {item.color && ` · ${item.color}`}
-                      {item.size && ` · ${item.size}`}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div>¥{item.price.toFixed(2)}</div>
-                    <div style={{ fontSize: 12, color: '#999' }}>x{item.quantity}</div>
-                  </div>
-                  <div style={{ width: 100, textAlign: 'right', fontWeight: 500 }}>
-                    ¥{(item.price * item.quantity).toFixed(2)}
-                  </div>
-                </div>
-              ))}
-            </Card>
-
-            <Descriptions bordered column={2} style={{ marginTop: 16 }}>
-              <Descriptions.Item label="商品总额" span={1}>
-                ¥{currentOrder.totalAmount.toFixed(2)}
-              </Descriptions.Item>
-              {currentOrder.discountAmount > 0 && (
-                <Descriptions.Item label="优惠金额" span={1} style={{ color: '#ff4d4f' }}>
-                  -¥{currentOrder.discountAmount.toFixed(2)}
-                </Descriptions.Item>
-              )}
-              <Descriptions.Item label="实付金额" span={2} style={{ fontSize: 18, fontWeight: 600 }}>
-                ¥{currentOrder.finalAmount.toFixed(2)}
-              </Descriptions.Item>
-            </Descriptions>
-
-            {currentOrder.note && (
-              <Descriptions title="备注" bordered column={1} style={{ marginTop: 16 }}>
-                <Descriptions.Item>{currentOrder.note}</Descriptions.Item>
-              </Descriptions>
-            )}
-          </div>
+            <Table
+              rowKey="id"
+              pagination={false}
+              dataSource={currentOrder.items}
+              columns={[
+                { title: '商品', dataIndex: 'productName', key: 'productName' },
+                { title: '规格', key: 'specification', render: (_, item) => `${item.color || '-'} / ${item.size || '-'}` },
+                { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode' },
+                { title: '单价', dataIndex: 'price', key: 'price', render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '数量', dataIndex: 'quantity', key: 'quantity' },
+                { title: '小计', key: 'subtotal', render: (_, item) => `¥${(item.price * item.quantity).toFixed(2)}` },
+              ]}
+            />
+          </>
         )}
       </Modal>
 
-      <Modal
-        title={currentAction === 'ship' ? '发货确认' : currentAction === 'cancel' ? '取消订单' : '退款处理'}
-        open={actionModalVisible}
-        onCancel={() => setActionModalVisible(false)}
-        onOk={() => setActionModalVisible(false)}
-        destroyOnHidden
-      >
-        <p>
-          {currentAction === 'ship'
-            ? '订单已标记为发货状态'
-            : currentAction === 'cancel'
-            ? '订单已取消'
-            : '退款已处理完成'}
-        </p>
+      <Modal open={shipVisible} title="订单发货" onOk={() => void submitShip()} onCancel={() => setShipVisible(false)}>
+        <Form form={shipForm} layout="vertical">
+          <Form.Item name="shippingCompany" label="物流公司" rules={[{ required: true, message: '请输入物流公司' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="trackingNumber" label="运单号" rules={[{ required: true, message: '请输入运单号' }]}>
+            <Input />
+          </Form.Item>
+        </Form>
       </Modal>
 
-      <Modal
-        title="新建订单"
-        open={addModalVisible}
-        onCancel={handleAddOrderCancel}
-        footer={null}
-        width={900}
-        destroyOnHidden
-      >
-        <OrderForm
-          onSubmit={handleAddOrderSubmit}
-          onCancel={handleAddOrderCancel}
-          loading={addOrderLoading}
-        />
+      <Modal open={refundVisible} title="订单退款" onOk={() => void submitRefund()} onCancel={() => setRefundVisible(false)}>
+        <Form form={refundForm} layout="vertical">
+          <Form.Item name="amount" label="退款金额" rules={[{ required: true, message: '请输入退款金额' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="reason" label="退款原因" rules={[{ required: true, message: '请输入退款原因' }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal open={cancelVisible} title="取消订单" onOk={() => void submitCancel()} onCancel={() => setCancelVisible(false)}>
+        <Form form={cancelForm} layout="vertical">
+          <Form.Item name="reason" label="取消原因" rules={[{ required: true, message: '请输入取消原因' }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
