@@ -65,6 +65,7 @@ export function normalizeOrder(order: Order): Order {
     totalAmount: toNumber(order.totalAmount),
     discountAmount: toNumber(order.discountAmount),
     finalAmount: toNumber(order.finalAmount),
+    address: order.address ?? {},
     items: Array.isArray(order.items) ? order.items.map(normalizeOrderItem) : [],
   };
 }

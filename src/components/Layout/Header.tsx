@@ -21,7 +21,7 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   },
   '/orders': {
     title: '订单管理',
-    subtitle: '追踪每一笔订单状态与履约进度。',
+    subtitle: '记录门店订单、收款状态与售后处理。',
   },
   '/statistics': {
     title: '经营分析',

@@ -5,7 +5,6 @@ import {
   fetchOrderById,
   createOrder,
   updateOrderStatus,
-  shipOrder,
   cancelOrder,
   refundOrder,
   clearCurrentOrder,
@@ -69,16 +68,6 @@ export const useOrders = () => {
     }
   };
 
-  // 发货
-  const handleShipOrder = async (id: number, shippingInfo: { trackingNumber: string; shippingCompany: string }) => {
-    try {
-      const result = await dispatch(shipOrder({ id, shippingInfo })).unwrap();
-      return result;
-    } catch (err) {
-      return null;
-    }
-  };
-
   // 取消订单
   const handleCancelOrder = async (id: number, reason?: string) => {
     try {
@@ -125,7 +114,6 @@ export const useOrders = () => {
     getOrderById,
     addOrder,
     updateOrderStatus: handleUpdateStatus,
-    shipOrder: handleShipOrder,
     cancelOrder: handleCancelOrder,
     refundOrder: handleRefundOrder,
     clearCurrentOrder: handleClearCurrentOrder,

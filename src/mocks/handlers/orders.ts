@@ -100,16 +100,6 @@ export const ordersHandlers = [
     mockOrders[orderIndex].status = status as any;
     mockOrders[orderIndex].updatedAt = new Date().toISOString();
 
-    // 如果是发货状态，设置发货时间
-    if (status === 'shipped' && !mockOrders[orderIndex].shippedAt) {
-      mockOrders[orderIndex].shippedAt = new Date().toISOString();
-    }
-
-    // 如果是送达状态，设置送达时间
-    if (status === 'delivered' && !mockOrders[orderIndex].deliveredAt) {
-      mockOrders[orderIndex].deliveredAt = new Date().toISOString();
-    }
-
     return HttpResponse.json({
       success: true,
       data: mockOrders[orderIndex],
