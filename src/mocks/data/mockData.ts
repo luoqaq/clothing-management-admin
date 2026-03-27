@@ -1,4 +1,4 @@
-import type { User, Product, ProductCategory, ProductBrand, Order } from '../../types';
+import type { User, Product, ProductCategory, Supplier, Order } from '../../types';
 import dayjs from 'dayjs';
 
 // 用户数据
@@ -25,14 +25,14 @@ export const mockCategories: ProductCategory[] = [
   { id: 10, name: '牛仔裤', code: 'JEANS', parentId: 3 },
 ];
 
-// 商品品牌数据
-export const mockBrands: ProductBrand[] = [
-  { id: 1, name: 'Nike', logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=nike' },
-  { id: 2, name: 'Adidas', logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=adidas' },
-  { id: 3, name: 'Zara', logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=zara' },
-  { id: 4, name: 'H&M', logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=hm' },
-  { id: 5, name: 'Uniqlo', logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=uniqlo' },
-  { id: 6, name: 'Gucci', logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=gucci' },
+// 供应商数据
+export const mockSuppliers: Supplier[] = [
+  { id: 1, name: '华东成衣供应商' },
+  { id: 2, name: '深圳针织供应商' },
+  { id: 3, name: '广州牛仔供应商' },
+  { id: 4, name: '上海基础款供应商' },
+  { id: 5, name: '杭州女装供应商' },
+  { id: 6, name: '佛山配饰供应商' },
 ];
 
 // 商品数据

@@ -5,7 +5,7 @@ import type {
   ProductState,
   Product,
   ProductCategory,
-  ProductBrand,
+  Supplier,
   ProductFilters,
 } from '../../types';
 
@@ -14,7 +14,7 @@ const initialState: ProductState = {
   items: [],
   currentProduct: null,
   categories: [],
-  brands: [],
+  suppliers: [],
   loading: false,
   error: null,
   pagination: {
@@ -137,17 +137,17 @@ export const fetchCategories = createAsyncThunk(
 );
 
 // 获取品牌列表
-export const fetchBrands = createAsyncThunk(
-  'products/fetchBrands',
+export const fetchSuppliers = createAsyncThunk(
+  'products/fetchSuppliers',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await productsApi.getBrands();
+      const response = await productsApi.getSuppliers();
 
       if (response.success && response.data) {
         return response.data;
       }
 
-      return rejectWithValue(response.message || '获取品牌列表失败');
+      return rejectWithValue(response.message || '获取供应商列表失败');
     } catch (error) {
       return rejectWithValue('网络错误，请稍后重试');
     }
@@ -230,17 +230,17 @@ export const deleteCategory = createAsyncThunk(
 );
 
 // 创建品牌
-export const createBrand = createAsyncThunk(
-  'products/createBrand',
-  async (data: Omit<ProductBrand, 'id'>, { rejectWithValue }) => {
+export const createSupplier = createAsyncThunk(
+  'products/createSupplier',
+  async (data: Omit<Supplier, 'id'>, { rejectWithValue }) => {
     try {
-      const response = await productsApi.createBrand(data);
+      const response = await productsApi.createSupplier(data);
 
       if (response.success && response.data) {
         return response.data;
       }
 
-      return rejectWithValue(response.message || '创建品牌失败');
+      return rejectWithValue(response.message || '创建供应商失败');
     } catch (error) {
       return rejectWithValue('网络错误，请稍后重试');
     }
@@ -248,20 +248,20 @@ export const createBrand = createAsyncThunk(
 );
 
 // 更新品牌
-export const updateBrand = createAsyncThunk(
-  'products/updateBrand',
+export const updateSupplier = createAsyncThunk(
+  'products/updateSupplier',
   async (
-    { id, data }: { id: number; data: Partial<Omit<ProductBrand, 'id'>> },
+    { id, data }: { id: number; data: Partial<Omit<Supplier, 'id'>> },
     { rejectWithValue }
   ) => {
     try {
-      const response = await productsApi.updateBrand(id, data);
+      const response = await productsApi.updateSupplier(id, data);
 
       if (response.success && response.data) {
         return response.data;
       }
 
-      return rejectWithValue(response.message || '更新品牌失败');
+      return rejectWithValue(response.message || '更新供应商失败');
     } catch (error) {
       return rejectWithValue('网络错误，请稍后重试');
     }
@@ -269,17 +269,17 @@ export const updateBrand = createAsyncThunk(
 );
 
 // 删除品牌
-export const deleteBrand = createAsyncThunk(
-  'products/deleteBrand',
+export const deleteSupplier = createAsyncThunk(
+  'products/deleteSupplier',
   async (id: number, { rejectWithValue }) => {
     try {
-      const response = await productsApi.deleteBrand(id);
+      const response = await productsApi.deleteSupplier(id);
 
       if (response.success) {
         return id;
       }
 
-      return rejectWithValue(response.message || '删除品牌失败');
+      return rejectWithValue(response.message || '删除供应商失败');
     } catch (error) {
       return rejectWithValue('网络错误，请稍后重试');
     }
@@ -434,18 +434,18 @@ const productSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // 获取品牌列表
+    // 获取供应商列表
     builder
-      .addCase(fetchBrands.pending, (state) => {
+      .addCase(fetchSuppliers.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchBrands.fulfilled, (state, action) => {
+      .addCase(fetchSuppliers.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = action.payload;
+        state.suppliers = action.payload;
         state.error = null;
       })
-      .addCase(fetchBrands.rejected, (state, action) => {
+      .addCase(fetchSuppliers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -523,53 +523,53 @@ const productSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // 创建品牌
+    // 创建供应商
     builder
-      .addCase(createBrand.pending, (state) => {
+      .addCase(createSupplier.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createBrand.fulfilled, (state, action) => {
+      .addCase(createSupplier.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands.push(action.payload);
+        state.suppliers.push(action.payload);
         state.error = null;
       })
-      .addCase(createBrand.rejected, (state, action) => {
+      .addCase(createSupplier.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
 
-    // 更新品牌
+    // 更新供应商
     builder
-      .addCase(updateBrand.pending, (state) => {
+      .addCase(updateSupplier.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateBrand.fulfilled, (state, action) => {
+      .addCase(updateSupplier.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.brands.findIndex((item) => item.id === action.payload.id);
+        const index = state.suppliers.findIndex((item) => item.id === action.payload.id);
         if (index !== -1) {
-          state.brands[index] = action.payload;
+          state.suppliers[index] = action.payload;
         }
         state.error = null;
       })
-      .addCase(updateBrand.rejected, (state, action) => {
+      .addCase(updateSupplier.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
 
-    // 删除品牌
+    // 删除供应商
     builder
-      .addCase(deleteBrand.pending, (state) => {
+      .addCase(deleteSupplier.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteBrand.fulfilled, (state, action) => {
+      .addCase(deleteSupplier.fulfilled, (state, action) => {
         state.loading = false;
-        state.brands = state.brands.filter((item) => item.id !== action.payload);
+        state.suppliers = state.suppliers.filter((item) => item.id !== action.payload);
         state.error = null;
       })
-      .addCase(deleteBrand.rejected, (state, action) => {
+      .addCase(deleteSupplier.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -590,7 +590,7 @@ export const {
 export const selectProducts = (state: RootState) => state.products.items;
 export const selectCurrentProduct = (state: RootState) => state.products.currentProduct;
 export const selectCategories = (state: RootState) => state.products.categories;
-export const selectBrands = (state: RootState) => state.products.brands;
+export const selectSuppliers = (state: RootState) => state.products.suppliers;
 export const selectProductLoading = (state: RootState) => state.products.loading;
 export const selectProductError = (state: RootState) => state.products.error;
 export const selectProductPagination = (state: RootState) => state.products.pagination;

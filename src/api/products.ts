@@ -2,7 +2,7 @@ import { api } from './index';
 import type {
   Product,
   ProductCategory,
-  ProductBrand,
+  Supplier,
   PaginatedResponse,
   ProductFilters,
 } from '../types';
@@ -98,24 +98,24 @@ export const productsApi = {
     return api.delete(`/products/categories/${id}`);
   },
 
-  // 获取品牌列表
-  getBrands: async () => {
-    return api.get<ProductBrand[]>('/products/brands');
+  // 获取供应商列表
+  getSuppliers: async () => {
+    return api.get<Supplier[]>('/products/suppliers');
   },
 
-  // 创建品牌
-  createBrand: async (data: Omit<ProductBrand, 'id'>) => {
-    return api.post<ProductBrand>('/products/brands', data);
+  // 创建供应商
+  createSupplier: async (data: Omit<Supplier, 'id'>) => {
+    return api.post<Supplier>('/products/suppliers', data);
   },
 
-  // 更新品牌
-  updateBrand: async (id: number, data: Partial<Omit<ProductBrand, 'id'>>) => {
-    return api.put<ProductBrand>(`/products/brands/${id}`, data);
+  // 更新供应商
+  updateSupplier: async (id: number, data: Partial<Omit<Supplier, 'id'>>) => {
+    return api.put<Supplier>(`/products/suppliers/${id}`, data);
   },
 
-  // 删除品牌
-  deleteBrand: async (id: number) => {
-    return api.delete(`/products/brands/${id}`);
+  // 删除供应商
+  deleteSupplier: async (id: number) => {
+    return api.delete(`/products/suppliers/${id}`);
   },
 
   // 更新库存

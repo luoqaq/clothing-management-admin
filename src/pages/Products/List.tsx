@@ -27,13 +27,13 @@ const ProductList: React.FC = () => {
   const {
     products,
     categories,
-    brands,
+    suppliers,
     loading,
     pagination,
     filters,
     getProducts,
     getCategories,
-    getBrands,
+    getSuppliers,
     removeProduct,
     updateStock,
     addProduct,
@@ -42,7 +42,7 @@ const ProductList: React.FC = () => {
 
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
-  const [selectedBrand, setSelectedBrand] = useState<number | undefined>();
+  const [selectedSupplier, setSelectedSupplier] = useState<number | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<ProductStatus | undefined>();
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -54,7 +54,7 @@ const ProductList: React.FC = () => {
   const [stockForm] = Form.useForm();
 
   useEffect(() => {
-    void Promise.all([getProducts({ page: 1, pageSize: 10 }), getCategories(), getBrands()]);
+    void Promise.all([getProducts({ page: 1, pageSize: 10 }), getCategories(), getSuppliers()]);
   }, []);
 
   const loadProducts = (params?: { page?: number; pageSize?: number; filters?: ProductFilters }) =>
@@ -64,7 +64,7 @@ const ProductList: React.FC = () => {
     const nextFilters: ProductFilters = {
       search: searchText || undefined,
       categoryId: selectedCategory,
-      brandId: selectedBrand,
+      supplierId: selectedSupplier,
       status: selectedStatus,
     };
     void loadProducts({ page: 1, pageSize: 10, filters: nextFilters });
@@ -73,7 +73,7 @@ const ProductList: React.FC = () => {
   const handleReset = () => {
     setSearchText('');
     setSelectedCategory(undefined);
-    setSelectedBrand(undefined);
+    setSelectedSupplier(undefined);
     setSelectedStatus(undefined);
     void loadProducts({ page: 1, pageSize: 10, filters: {} });
   };
@@ -183,7 +183,7 @@ const ProductList: React.FC = () => {
       render: (_: unknown, record: Product) => (
         <div>
           <div style={{ fontWeight: 600 }}>{record.name}</div>
-          <div style={{ color: '#8c8c8c' }}>{record.brand?.name || '未设置品牌'}</div>
+          <div style={{ color: '#8c8c8c' }}>{record.supplier?.name || '未设置供应商'}</div>
         </div>
       ),
     },
@@ -322,11 +322,11 @@ const ProductList: React.FC = () => {
           />
           <Select
             allowClear
-            placeholder="品牌"
+            placeholder="供应商"
             className="filter-toolbar__select"
-            value={selectedBrand}
-            options={brands.map((item) => ({ label: item.name, value: item.id }))}
-            onChange={setSelectedBrand}
+            value={selectedSupplier}
+            options={suppliers.map((item) => ({ label: item.name, value: item.id }))}
+            onChange={setSelectedSupplier}
           />
           <Select
             allowClear
@@ -388,7 +388,7 @@ const ProductList: React.FC = () => {
                   {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
                 </Descriptions.Item>
                 <Descriptions.Item label="分类">{selectedProduct.category?.name || '-'}</Descriptions.Item>
-                <Descriptions.Item label="品牌">{selectedProduct.brand?.name || '-'}</Descriptions.Item>
+                <Descriptions.Item label="供应商">{selectedProduct.supplier?.name || '-'}</Descriptions.Item>
                 <Descriptions.Item label="规格数">{selectedProduct.specCount}</Descriptions.Item>
                 <Descriptions.Item label="总库存">{selectedProduct.totalStock}</Descriptions.Item>
                 <Descriptions.Item label="售价范围">{`¥${selectedProduct.minPrice.toFixed(2)} - ¥${selectedProduct.maxPrice.toFixed(2)}`}</Descriptions.Item>
@@ -447,14 +447,14 @@ const ProductList: React.FC = () => {
       </Modal>
 
       <Modal open={addModalVisible} title="新建商品" footer={null} onCancel={() => setAddModalVisible(false)} width={1100} destroyOnHidden>
-        <ProductForm categories={categories} brands={brands} onSubmit={handleAddSubmit} onCancel={() => setAddModalVisible(false)} loading={saveLoading} />
+        <ProductForm categories={categories} suppliers={suppliers} onSubmit={handleAddSubmit} onCancel={() => setAddModalVisible(false)} loading={saveLoading} />
       </Modal>
 
       <Modal open={editModalVisible} title="编辑商品" footer={null} onCancel={() => setEditModalVisible(false)} width={1100} destroyOnHidden>
         {selectedProduct && (
           <ProductForm
             categories={categories}
-            brands={brands}
+            suppliers={suppliers}
             product={selectedProduct}
             onSubmit={handleEditSubmit}
             onCancel={() => setEditModalVisible(false)}

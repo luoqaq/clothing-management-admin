@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import type { DailySalesData, ProductSalesRanking, CategorySalesData, BrandSalesData, RegionSalesData } from '../../types';
-import { mockProducts, mockCategories, mockBrands, mockOrders } from '../data/mockData';
+import { mockProducts, mockCategories, mockSuppliers, mockOrders } from '../data/mockData';
 import dayjs from 'dayjs';
 
 export const statisticsHandlers = [
@@ -165,9 +165,9 @@ export const statisticsHandlers = [
 
   // 获取品牌销售数据
   http.get('/api/statistics/brand-sales', () => {
-    const brandSales: BrandSalesData[] = mockBrands.map((brand) => {
-      // 找到该品牌下的商品
-      const brandProducts = mockProducts.filter((p) => p.brandId === brand.id);
+    const brandSales: BrandSalesData[] = mockSuppliers.map((brand) => {
+      // mock 统计仍复用原品牌销售结构，但底层数据已改为供应商
+      const brandProducts = mockProducts.filter((p) => p.supplierId === brand.id);
 
       // 找到包含这些商品的订单
       const relevantOrders = mockOrders.filter((order) => {

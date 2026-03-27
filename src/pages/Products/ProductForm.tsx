@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import type { Product, ProductBrand, ProductCategory } from '../../types';
+import type { Product, ProductCategory, Supplier } from '../../types';
 import ImageUploadField from '../../components/ImageUploadField';
 
 const { Title, Text } = Typography;
@@ -17,7 +17,7 @@ const SIZE_OPTIONS = [
 
 interface ProductFormProps {
   categories: ProductCategory[];
-  brands: ProductBrand[];
+  suppliers: Supplier[];
   onSubmit: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -31,7 +31,7 @@ function buildSkuCode(productCode?: string, size?: string, color?: string): stri
 
 const ProductForm: React.FC<ProductFormProps> = ({
   categories,
-  brands,
+  suppliers,
   onSubmit,
   onCancel,
   loading = false,
@@ -66,7 +66,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       name: product.name,
       description: product.description,
       categoryId: product.categoryId,
-      brandId: product.brandId ?? undefined,
+      supplierId: product.supplierId ?? undefined,
       status: product.status,
       mainImages: product.mainImages.slice(0, 1),
       detailImages: product.detailImages,
@@ -95,7 +95,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       name: values.name,
       description: values.description,
       categoryId: values.categoryId,
-      brandId: values.brandId ?? null,
+      supplierId: values.supplierId ?? null,
       mainImages: Array.isArray(values.mainImages) ? values.mainImages.slice(0, 1) : [],
       detailImages: Array.isArray(values.detailImages) ? values.detailImages : [],
       tags: values.tags
@@ -128,7 +128,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       minPrice: product?.minPrice ?? 0,
       maxPrice: product?.maxPrice ?? 0,
       category: product?.category,
-      brand: product?.brand,
+      supplier: product?.supplier,
     });
   };
 
@@ -186,12 +186,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 </Form.Item>
               </Col>
               <Col xs={24} md={8}>
-                <Form.Item name="brandId" label="品牌">
+                <Form.Item name="supplierId" label="供应商">
                   <Select
                     className="product-form__select"
                     allowClear
-                    placeholder="选择品牌"
-                    options={brands.map((item) => ({ label: item.name, value: item.id }))}
+                    placeholder="选择供应商"
+                    options={suppliers.map((item) => ({ label: item.name, value: item.id }))}
                   />
                 </Form.Item>
               </Col>

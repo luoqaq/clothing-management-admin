@@ -31,7 +31,7 @@ export function normalizeProduct(product: Product): Product {
     ...product,
     id: toNumber(product.id),
     categoryId: toNumber(product.categoryId),
-    brandId: product.brandId == null ? null : toNumber(product.brandId),
+    supplierId: product.supplierId == null ? null : toNumber(product.supplierId),
     mainImages: Array.isArray(product.mainImages) ? product.mainImages : [],
     detailImages: Array.isArray(product.detailImages) ? product.detailImages : [],
     tags: Array.isArray(product.tags) ? product.tags : [],

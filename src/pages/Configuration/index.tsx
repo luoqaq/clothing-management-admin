@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Tabs, Typography, message } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useProducts } from '../../hooks/useProducts';
-import type { ProductBrand, ProductCategory } from '../../types';
+import type { ProductCategory, Supplier } from '../../types';
 
 const { Title, Text } = Typography;
 
@@ -41,22 +41,19 @@ const CategoryModal: React.FC<BaseModalProps<ProductCategory>> = ({ open, title,
   );
 };
 
-const BrandModal: React.FC<BaseModalProps<ProductBrand>> = ({ open, title, data, onCancel, onSubmit, loading }) => {
+const SupplierModal: React.FC<BaseModalProps<Supplier>> = ({ open, title, data, onCancel, onSubmit, loading }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
     if (open) {
-      form.setFieldsValue(data ?? { name: '', logo: '' });
+      form.setFieldsValue(data ?? { name: '' });
     }
   }, [data, form, open]);
 
   return (
     <Modal open={open} title={title} onCancel={onCancel} onOk={() => void form.validateFields().then(onSubmit)} confirmLoading={loading} destroyOnHidden>
       <Form form={form} layout="vertical">
-        <Form.Item name="name" label="品牌名称" rules={[{ required: true, message: '请输入品牌名称' }]}>
-          <Input />
-        </Form.Item>
-        <Form.Item name="logo" label="Logo 链接">
+        <Form.Item name="name" label="供应商名称" rules={[{ required: true, message: '请输入供应商名称' }]}>
           <Input />
         </Form.Item>
       </Form>
@@ -67,33 +64,31 @@ const BrandModal: React.FC<BaseModalProps<ProductBrand>> = ({ open, title, data,
 const ConfigurationPage: React.FC = () => {
   const {
     categories,
-    brands,
+    suppliers,
     getCategories,
-    getBrands,
+    getSuppliers,
     addCategory,
     updateCategory,
     deleteCategory,
-    addBrand,
-    updateBrand,
-    deleteBrand,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
   } = useProducts();
 
   const [loading, setLoading] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [brandModalVisible, setBrandModalVisible] = useState(false);
+  const [supplierModalVisible, setSupplierModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | undefined>();
-  const [editingBrand, setEditingBrand] = useState<ProductBrand | undefined>();
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>();
 
   useEffect(() => {
-    void Promise.all([getCategories(), getBrands()]);
+    void Promise.all([getCategories(), getSuppliers()]);
   }, []);
 
   const handleCategorySubmit = async (data: any) => {
     setLoading(true);
     try {
-      const result = editingCategory
-        ? await updateCategory(editingCategory.id, data)
-        : await addCategory(data);
+      const result = editingCategory ? await updateCategory(editingCategory.id, data) : await addCategory(data);
 
       if (result) {
         message.success(editingCategory ? '分类更新成功' : '分类创建成功');
@@ -106,15 +101,15 @@ const ConfigurationPage: React.FC = () => {
     }
   };
 
-  const handleBrandSubmit = async (data: any) => {
+  const handleSupplierSubmit = async (data: any) => {
     setLoading(true);
     try {
-      const result = editingBrand ? await updateBrand(editingBrand.id, data) : await addBrand(data);
+      const result = editingSupplier ? await updateSupplier(editingSupplier.id, data) : await addSupplier(data);
       if (result) {
-        message.success(editingBrand ? '品牌更新成功' : '品牌创建成功');
-        setBrandModalVisible(false);
-        setEditingBrand(undefined);
-        void getBrands();
+        message.success(editingSupplier ? '供应商更新成功' : '供应商创建成功');
+        setSupplierModalVisible(false);
+        setEditingSupplier(undefined);
+        void getSuppliers();
       }
     } finally {
       setLoading(false);
@@ -133,7 +128,7 @@ const ConfigurationPage: React.FC = () => {
           </div>
         </div>
         <Text className="content-panel__intro">
-          统一维护商品分类、品牌等主数据，供商品建档、规格管理和筛选使用。
+          统一维护商品分类、供应商等主数据，供商品建档、规格管理和筛选使用。
         </Text>
       </Card>
 
@@ -190,8 +185,8 @@ const ConfigurationPage: React.FC = () => {
             ),
           },
           {
-            key: 'brands',
-            label: '品牌管理',
+            key: 'suppliers',
+            label: '供应商管理',
             children: (
               <Card
                 className="content-panel"
@@ -200,31 +195,30 @@ const ConfigurationPage: React.FC = () => {
                     type="primary"
                     icon={<PlusOutlined />}
                     onClick={() => {
-                      setEditingBrand(undefined);
-                      setBrandModalVisible(true);
+                      setEditingSupplier(undefined);
+                      setSupplierModalVisible(true);
                     }}
                   >
-                    新增品牌
+                    新增供应商
                   </Button>
                 }
               >
                 <Table
                   className="content-table"
                   rowKey="id"
-                  dataSource={brands}
+                  dataSource={suppliers}
                   columns={[
                     { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-                    { title: '品牌名称', dataIndex: 'name', key: 'name' },
-                    { title: 'Logo', dataIndex: 'logo', key: 'logo', render: (value: string) => value || '-' },
+                    { title: '供应商名称', dataIndex: 'name', key: 'name' },
                     {
                       title: '操作',
                       key: 'actions',
-                      render: (_, record: ProductBrand) => (
+                      render: (_, record: Supplier) => (
                         <Space>
-                          <Button type="text" icon={<EditOutlined />} onClick={() => { setEditingBrand(record); setBrandModalVisible(true); }}>
+                          <Button type="text" icon={<EditOutlined />} onClick={() => { setEditingSupplier(record); setSupplierModalVisible(true); }}>
                             编辑
                           </Button>
-                          <Popconfirm title="确定删除该品牌？" onConfirm={() => void deleteBrand(record.id).then(() => getBrands())}>
+                          <Popconfirm title="确定删除该供应商？" onConfirm={() => void deleteSupplier(record.id).then(() => getSuppliers())}>
                             <Button type="text" danger icon={<DeleteOutlined />}>
                               删除
                             </Button>
@@ -252,15 +246,15 @@ const ConfigurationPage: React.FC = () => {
         loading={loading}
       />
 
-      <BrandModal
-        open={brandModalVisible}
-        title={editingBrand ? '编辑品牌' : '新增品牌'}
-        data={editingBrand}
+      <SupplierModal
+        open={supplierModalVisible}
+        title={editingSupplier ? '编辑供应商' : '新增供应商'}
+        data={editingSupplier}
         onCancel={() => {
-          setBrandModalVisible(false);
-          setEditingBrand(undefined);
+          setSupplierModalVisible(false);
+          setEditingSupplier(undefined);
         }}
-        onSubmit={handleBrandSubmit}
+        onSubmit={handleSupplierSubmit}
         loading={loading}
       />
     </div>

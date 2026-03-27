@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
-import type { Product, ProductCategory, ProductBrand } from '../../types';
-import { mockProducts, mockCategories, mockBrands } from '../data/mockData';
+import type { Product, ProductCategory, Supplier } from '../../types';
+import { mockProducts, mockCategories, mockSuppliers } from '../data/mockData';
 
 export const productsHandlers = [
   // 获取商品列表
@@ -221,76 +221,76 @@ export const productsHandlers = [
     });
   }),
 
-  // 获取品牌列表
-  http.get('/api/products/brands', () => {
+  // 获取供应商列表
+  http.get('/api/products/suppliers', () => {
     return HttpResponse.json({
       success: true,
-      data: mockBrands,
+      data: mockSuppliers,
     });
   }),
 
-  // 创建品牌
-  http.post('/api/products/brands', async ({ request }) => {
-    const brandData = await request.json();
+  // 创建供应商
+  http.post('/api/products/suppliers', async ({ request }) => {
+    const supplierData = await request.json();
 
-    const newBrand: ProductBrand = {
-      ...brandData,
+    const newSupplier: Supplier = {
+      ...supplierData,
       id: Date.now(),
     };
 
-    mockBrands.push(newBrand);
+    mockSuppliers.push(newSupplier);
 
     return HttpResponse.json({
       success: true,
-      data: newBrand,
+      data: newSupplier,
     });
   }),
 
-  // 更新品牌
-  http.put('/api/products/brands/:id', async ({ request, params }) => {
+  // 更新供应商
+  http.put('/api/products/suppliers/:id', async ({ request, params }) => {
     const id = parseInt(params.id);
-    const brandData = await request.json();
+    const supplierData = await request.json();
 
-    const brandIndex = mockBrands.findIndex((b) => b.id === id);
+    const supplierIndex = mockSuppliers.findIndex((b) => b.id === id);
 
-    if (brandIndex === -1) {
+    if (supplierIndex === -1) {
       return HttpResponse.json({
         success: false,
-        message: '品牌不存在',
+        message: '供应商不存在',
       });
     }
 
-    const updatedBrand: ProductBrand = {
-      ...mockBrands[brandIndex],
-      ...brandData,
+    const updatedSupplier: Supplier = {
+      ...mockSuppliers[supplierIndex],
+      ...supplierData,
     };
 
-    mockBrands[brandIndex] = updatedBrand;
+    mockSuppliers[supplierIndex] = updatedSupplier;
 
     return HttpResponse.json({
       success: true,
-      data: updatedBrand,
+      data: updatedSupplier,
     });
   }),
 
-  // 删除品牌
-  http.delete('/api/products/brands/:id', ({ params }) => {
+  // 删除供应商
+  http.delete('/api/products/suppliers/:id', ({ params }) => {
     const id = parseInt(params.id);
 
-    const brandIndex = mockBrands.findIndex((b) => b.id === id);
+    const supplierIndex = mockSuppliers.findIndex((b) => b.id === id);
 
-    if (brandIndex === -1) {
+    if (supplierIndex === -1) {
       return HttpResponse.json({
         success: false,
-        message: '品牌不存在',
+        message: '供应商不存在',
       });
     }
 
-    mockBrands.splice(brandIndex, 1);
+    mockSuppliers.splice(supplierIndex, 1);
 
     return HttpResponse.json({
       success: true,
-      message: '品牌删除成功',
+      message: '供应商删除成功',
     });
   }),
 
