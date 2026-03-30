@@ -2,6 +2,26 @@
 
 最近更新：2026-03-27
 
+## 会话更新（2026-03-30）
+- 已完成前端构建体积优化：
+  - 移除了 `echarts-for-react`，改为按需引入 ECharts 核心模块
+  - 创建了 `src/components/ECharts/index.tsx` 封装组件，仅注册项目需要的图表类型（LineChart, BarChart, PieChart）
+  - 优化了 `vite.config.ts`，添加 `manualChunks` 配置实现精细化的代码分割：
+    - `vendor-react`：React 核心库
+    - `vendor-redux`：Redux 相关
+    - `vendor-antd`：Ant Design 及其图标
+    - `vendor-echarts`：ECharts 图表库（约 558KB）
+    - `vendor-utils`：工具库（dayjs, axios, zod 等）
+    - `module-statistics/products/orders`：业务模块独立打包
+  - 更新了 `Dashboard.tsx` 和 `Statistics/index.tsx`，使用新的 ECharts 组件
+- 优化效果：
+  - 原 `useStatistics` chunk 1,131KB → 现 `module-statistics` 仅 12KB
+  - ECharts 独立打包 558KB，业务页面体积大幅减少
+  - 统计页面仅 5KB，工作台页面仅 5KB
+- 构建警告仍存在（Ant Design 全量引入约 1.2MB），但已远低于优化前水平
+- 本次验证已执行：
+  - `npm run build` 通过
+
 ## 会话更新（2026-03-27）
 - 商品主数据已从“品牌”切换为“供应商”。
 - 前端已同步改造以下链路：
@@ -12,7 +32,7 @@
 - mock 商品接口与 mock 商品主数据也已同步切换为供应商；统计 mock 仍保留原 `brand-sales` 接口名，但底层已改为按供应商数据生成，避免编译受阻。
 - 本次验证已执行：
   - `npm run build` 通过
-- 构建阶段仍有大体积 chunk warning，当前未处理，不阻塞本次提交。
+- ~~构建阶段仍有大体积 chunk warning，当前未处理，不阻塞本次提交。~~（已在 2026-03-30 优化）
 
 ## 会话更新（2026-03-23）
 - 确认当前未提交改动主要包括三类：

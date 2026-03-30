@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Row, Col, Card, Table, Typography, Spin, DatePicker, Button, message, Space, Empty } from 'antd';
 import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
+import { ECharts } from '../../components/ECharts';
 import { useStatistics } from '../../hooks/useStatistics';
 import type { ProductSalesRanking } from '../../types';
 import dayjs from 'dayjs';
@@ -303,7 +303,7 @@ const StatisticsPage: React.FC = () => {
 
       <Spin spinning={loading}>
         <Card title="销售趋势" className="content-panel">
-          <ReactECharts option={salesChartOption} style={{ height: 350 }} />
+          <ECharts option={salesChartOption} style={{ height: 350 }} />
         </Card>
 
         <Row gutter={[18, 18]} style={{ marginBottom: 18 }}>
@@ -311,7 +311,7 @@ const StatisticsPage: React.FC = () => {
             <Card title="类别销售分析" className="content-panel">
               <Row gutter={16}>
                 <Col span={12}>
-                  <ReactECharts option={categoryChartOption} style={{ height: 300 }} />
+                  <ECharts option={categoryChartOption} style={{ height: 300 }} />
                 </Col>
                 <Col span={12}>
                   <Table
@@ -329,7 +329,7 @@ const StatisticsPage: React.FC = () => {
 
           <Col xs={24} lg={12}>
             <Card title="区域销售分析" className="content-panel">
-              <ReactECharts option={regionChartOption} style={{ height: 300 }} />
+              <ECharts option={regionChartOption} style={{ height: 300 }} />
             </Card>
           </Col>
         </Row>

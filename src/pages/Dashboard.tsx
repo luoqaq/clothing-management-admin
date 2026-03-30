@@ -9,7 +9,7 @@ import {
   FallOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
+import { ECharts } from '../components/ECharts';
 import { useStatistics } from '../hooks/useStatistics';
 
 const { Title, Text } = Typography;
@@ -238,10 +238,9 @@ const Dashboard: React.FC = () => {
                 </div>
                 <Text className="dashboard-panel__meta">Revenue vs orders</Text>
               </div>
-              <ReactECharts
+              <ECharts
                 option={salesChartOption}
                 style={{ height: 360 }}
-                opts={{ renderer: 'canvas' }}
               />
             </Card>
           </Col>
