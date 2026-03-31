@@ -158,6 +158,7 @@ const ConfigurationPage: React.FC = () => {
                   className="content-table"
                   rowKey="id"
                   dataSource={categories}
+                  scroll={{ x: 720 }}
                   columns={[
                     { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
                     { title: '分类名称', dataIndex: 'name', key: 'name' },
@@ -207,6 +208,7 @@ const ConfigurationPage: React.FC = () => {
                   className="content-table"
                   rowKey="id"
                   dataSource={suppliers}
+                  scroll={{ x: 520 }}
                   columns={[
                     { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
                     { title: '供应商名称', dataIndex: 'name', key: 'name' },

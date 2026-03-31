@@ -35,11 +35,12 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
 
 interface HeaderProps {
   collapsed: boolean;
+  compact?: boolean;
   onToggle: () => void;
   onHeightChange?: (height: number) => void;
 }
 
-const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle, onHeightChange }) => {
+const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, onToggle, onHeightChange }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -138,7 +139,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle, onHeightC
     <Header
       ref={headerRef}
       className="app-header"
-      style={{ left: collapsed ? 92 : 296 }}
+      style={{ left: compact ? 20 : collapsed ? 92 : 296 }}
     >
       <div className="app-header__primary">
         <Button
@@ -151,7 +152,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle, onHeightC
           <Text className="app-header__eyebrow">{BRAND_NAME}</Text>
           <div className="app-header__title-row">
             <Text className="app-header__title">{pageMeta.title}</Text>
-            {!collapsed && <Text className="app-header__subtitle">{pageMeta.subtitle}</Text>}
+            {(!collapsed || compact) && <Text className="app-header__subtitle">{pageMeta.subtitle}</Text>}
           </div>
         </div>
       </div>
@@ -185,8 +186,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, onToggle, onHeightC
               className="app-header__avatar"
             />
             <div className="app-header__profile-copy">
-              {!collapsed && <Text className="app-header__profile-name">{user?.name}</Text>}
-              {!collapsed && <Text className="app-header__profile-role">{user?.role}</Text>}
+              {(!collapsed || compact) && <Text className="app-header__profile-name">{user?.name}</Text>}
+              {(!collapsed || compact) && <Text className="app-header__profile-role">{user?.role}</Text>}
             </div>
           </Space>
         </Dropdown>

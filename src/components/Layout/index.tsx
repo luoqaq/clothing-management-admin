@@ -13,6 +13,7 @@ const MainLayout: React.FC = () => {
   const [headerHeight, setHeaderHeight] = useState(96);
   const { isAuthenticated } = useAuth();
   const screens = useBreakpoint();
+  const isCompact = screens.lg === false;
 
   // 如果未认证，不显示布局（路由已处理跳转）
   if (!isAuthenticated) {
@@ -20,32 +21,40 @@ const MainLayout: React.FC = () => {
   }
 
   useEffect(() => {
-    if (screens.md === false) {
+    if (isCompact) {
       setCollapsed(true);
     }
-  }, [screens.md]);
+  }, [isCompact]);
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
+  };
+
+  const closeSidebar = () => {
+    if (isCompact) {
+      setCollapsed(true);
+    }
   };
 
   return (
     <Layout className="app-shell">
       <div className="app-shell__glow app-shell__glow--left" />
       <div className="app-shell__glow app-shell__glow--right" />
-      <Sidebar collapsed={collapsed} />
+      {isCompact && !collapsed ? <button type="button" className="app-shell__backdrop" aria-label="关闭导航" onClick={closeSidebar} /> : null}
+      <Sidebar collapsed={collapsed} compact={isCompact} onNavigate={closeSidebar} />
       <Layout
         className={`app-main ${collapsed ? 'app-main--collapsed' : ''}`}
-        style={{ marginLeft: collapsed ? 92 : 296 }}
+        style={{ marginLeft: isCompact ? 0 : collapsed ? 92 : 296 }}
       >
         <HeaderComponent
           collapsed={collapsed}
+          compact={isCompact}
           onToggle={toggleSidebar}
           onHeightChange={(height) => setHeaderHeight(Math.ceil(height))}
         />
         <Content
           className="app-content"
-          style={{ marginTop: headerHeight + 40 }}
+          style={{ marginTop: headerHeight + (isCompact ? 24 : 40) }}
         >
           <Outlet />
         </Content>

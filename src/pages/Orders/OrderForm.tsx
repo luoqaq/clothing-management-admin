@@ -4,6 +4,7 @@ import {
   Card,
   Col,
   Form,
+  Grid,
   Image,
   Input,
   InputNumber,
@@ -46,6 +47,7 @@ interface OrderFormProps {
 
 const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = false }) => {
   const [form] = Form.useForm();
+  const screens = Grid.useBreakpoint();
   const { products, categories, getProducts, getCategories } = useProducts();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectorVisible, setSelectorVisible] = useState(false);
@@ -97,6 +99,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discountAmount = Form.useWatch('discountAmount', form) || 0;
   const finalAmount = Math.max(totalAmount - discountAmount, 0);
+  const selectorModalWidth = screens.lg ? 980 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
   const handleSelectSpecification = (row: CartItem) => {
     if (cartItems.some((item) => item.skuId === row.skuId)) {
@@ -264,7 +267,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           </div>
         </div>
         <Row gutter={16}>
-          <Col span={8}>
+          <Col xs={24} md={8}>
             <Form.Item name="paymentMethod" label="支付方式">
               <Select
                 className="order-form__select"
@@ -277,7 +280,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} md={8}>
             <Form.Item name="discountAmount" label="优惠金额">
               <InputNumber min={0} precision={2} style={{ width: '100%' }} />
             </Form.Item>
@@ -302,12 +305,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           </div>
         </div>
         <Row gutter={16}>
-          <Col span={8}>
+          <Col xs={24} md={8}>
             <Form.Item name="customerName" label="客户姓名">
               <Input placeholder="选填" />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} md={8}>
             <Form.Item
               name="customerPhone"
               label="联系电话"
@@ -321,7 +324,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
               <Input placeholder="选填" />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} md={8}>
             <Form.Item name="customerEmail" label="电子邮箱" rules={[{ type: 'email', message: '请输入正确邮箱格式' }]}>
               <Input placeholder="选填" />
             </Form.Item>
@@ -333,7 +336,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         open={selectorVisible}
         title="选择规格"
         footer={null}
-        width={980}
+        width={selectorModalWidth}
         onCancel={() => setSelectorVisible(false)}
         destroyOnHidden
       >

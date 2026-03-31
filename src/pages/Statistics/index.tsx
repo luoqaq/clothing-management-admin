@@ -286,17 +286,17 @@ const StatisticsPage: React.FC = () => {
             </Title>
           </div>
           <Space wrap>
-          <RangePicker
-            value={datePickerValue}
-            onChange={handleDateChange}
-            className="stats-toolbar__range"
-          />
-          <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
-            刷新
-          </Button>
-          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport}>
-            导出
-          </Button>
+            <RangePicker
+              value={datePickerValue}
+              onChange={handleDateChange}
+              className="stats-toolbar__range"
+            />
+            <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
+              刷新
+            </Button>
+            <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport}>
+              导出
+            </Button>
           </Space>
         </div>
       </Card>
@@ -310,10 +310,10 @@ const StatisticsPage: React.FC = () => {
           <Col xs={24} lg={12}>
             <Card title="类别销售分析" className="content-panel">
               <Row gutter={16}>
-                <Col span={12}>
+                <Col xs={24} md={12}>
                   <ECharts option={categoryChartOption} style={{ height: 300 }} />
                 </Col>
-                <Col span={12}>
+                <Col xs={24} md={12}>
                   <Table
                     className="content-table"
                     columns={categoryColumns}
@@ -321,6 +321,7 @@ const StatisticsPage: React.FC = () => {
                     rowKey="categoryId"
                     pagination={false}
                     size="small"
+                    scroll={{ x: 420 }}
                   />
                 </Col>
               </Row>
@@ -341,6 +342,7 @@ const StatisticsPage: React.FC = () => {
             dataSource={productRankings}
             rowKey="productId"
             pagination={false}
+            scroll={{ x: 720 }}
           />
         </Card>
       </Spin>

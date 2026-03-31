@@ -82,6 +82,15 @@ img {
   background: transparent;
 }
 
+.app-shell__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  border: 0;
+  background: rgba(47, 42, 36, 0.18);
+  backdrop-filter: blur(4px);
+}
+
 .app-shell__glow {
   position: fixed;
   width: 320px;
@@ -117,6 +126,7 @@ img {
   min-height: calc(100vh - 142px);
   background: transparent;
   animation: fadeUpSoft 0.42s ease;
+  transition: margin 0.24s ease;
 }
 
 .app-sider.ant-layout-sider {
@@ -130,6 +140,10 @@ img {
   background:
     linear-gradient(180deg, rgba(252, 247, 240, 0.96) 0%, rgba(244, 236, 223, 0.96) 100%);
   backdrop-filter: blur(20px);
+  transition:
+    transform 0.24s ease,
+    opacity 0.24s ease,
+    box-shadow 0.24s ease;
 }
 
 .app-sider .ant-layout-sider-children {
@@ -224,6 +238,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .app-header__primary,
@@ -429,6 +444,7 @@ img {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
+  flex-wrap: wrap;
 }
 
 .content-panel__eyebrow.ant-typography {
@@ -449,6 +465,10 @@ img {
   gap: 12px;
   align-items: center;
   padding: 16px 0 18px;
+}
+
+.filter-toolbar > * {
+  min-width: 0;
 }
 
 .filter-toolbar__search {
@@ -535,6 +555,10 @@ img {
 
 .content-table .ant-table-container {
   border-radius: 18px;
+}
+
+.content-table .ant-table-content {
+  overflow-x: auto;
 }
 
 .content-table .ant-table-thead > tr > th,
@@ -1376,6 +1400,10 @@ img {
   background: rgba(255, 251, 245, 0.97);
 }
 
+.ant-modal {
+  max-width: calc(100vw - 24px);
+}
+
 .ant-modal .ant-modal-header {
   background: transparent;
 }
@@ -1423,6 +1451,21 @@ img {
 }
 
 @media (max-width: 1200px) {
+  .app-header.ant-layout-header {
+    align-items: flex-start;
+  }
+
+  .app-header__actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-panel__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .login-page__shell {
     grid-template-columns: 1fr;
   }
@@ -1465,6 +1508,21 @@ img {
     margin: 0 12px 16px;
   }
 
+  .app-sider--compact.ant-layout-sider {
+    z-index: 12;
+    width: min(288px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px);
+    transform: translateX(calc(-100% - 20px));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .app-sider--compact.app-sider--open.ant-layout-sider {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .app-header__subtitle.ant-typography,
   .app-header__time-pill {
     display: none;
@@ -1484,14 +1542,13 @@ img {
   }
 
   .app-sider.ant-layout-sider {
-    inset: 12px auto auto 12px;
-    bottom: 12px;
-    z-index: 14;
+    inset: 12px auto 12px 12px;
   }
 
   .app-header.ant-layout-header {
     left: 12px !important;
     right: 12px;
+    gap: 14px;
   }
 
   .app-header__title.ant-typography {
@@ -1504,6 +1561,14 @@ img {
 
   .app-content {
     margin-top: 0;
+  }
+
+  .app-header__actions {
+    gap: 10px;
+  }
+
+  .app-header__profile {
+    padding: 4px;
   }
 
   .login-page {
@@ -1527,6 +1592,11 @@ img {
     width: 100%;
   }
 
+  .filter-toolbar .ant-btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
+
   .form-panel__header,
   .content-panel__header {
     align-items: flex-start;
@@ -1534,12 +1604,44 @@ img {
   }
 
   .editor-form__toolbar {
-    justify-content: flex-start;
+    justify-content: stretch;
+  }
+
+  .editor-form__toolbar .ant-space {
+    width: 100%;
+    display: flex;
+  }
+
+  .editor-form__toolbar .ant-space-item {
+    flex: 1;
+  }
+
+  .editor-form__toolbar .ant-btn {
+    width: 100%;
+  }
+
+  .content-tabs > .ant-tabs-nav .ant-tabs-nav-wrap {
+    overflow-x: auto;
+  }
+
+  .content-tabs > .ant-tabs-nav .ant-tabs-tab {
+    flex: 0 0 auto;
   }
 
   .product-form__top-grid,
+  .product-form__hero,
   .detail-sheet__hero {
     grid-template-columns: 1fr;
+  }
+
+  .content-panel .ant-card-body,
+  .page-hero .ant-card-body,
+  .dashboard-panel .ant-card-body,
+  .dashboard-hero .ant-card-body,
+  .form-panel .ant-card-body,
+  .metric-card .ant-card-body,
+  .login-card.ant-card .ant-card-body {
+    padding: 18px;
   }
 
   .form-actions {
@@ -1548,5 +1650,27 @@ img {
 
   .order-summary {
     justify-content: flex-start;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - 12px);
+    margin: 8px auto;
+  }
+
+  .ant-modal .ant-modal-content {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+
+  .ant-modal .ant-modal-body {
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+
+  .content-table .ant-table-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
   }
 }

@@ -4,6 +4,7 @@ import {
   Card,
   Descriptions,
   Form,
+  Grid,
   Image,
   Input,
   InputNumber,
@@ -24,6 +25,7 @@ import type { Product, ProductFilters, ProductStatus, ProductSpecification } fro
 const { Title, Text } = Typography;
 
 const ProductList: React.FC = () => {
+  const screens = Grid.useBreakpoint();
   const {
     products,
     categories,
@@ -52,6 +54,8 @@ const ProductList: React.FC = () => {
   const [selectedSpecification, setSelectedSpecification] = useState<ProductSpecification | null>(null);
   const [saveLoading, setSaveLoading] = useState(false);
   const [stockForm] = Form.useForm();
+  const formModalWidth = screens.lg ? 1100 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
+  const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
   useEffect(() => {
     void Promise.all([getProducts({ page: 1, pageSize: 10 }), getCategories(), getSuppliers()]);
@@ -360,7 +364,7 @@ const ProductList: React.FC = () => {
         />
       </Card>
 
-      <Modal open={viewModalVisible} title="商品详情" footer={null} onCancel={() => setViewModalVisible(false)} width={960}>
+      <Modal open={viewModalVisible} title="商品详情" footer={null} onCancel={() => setViewModalVisible(false)} width={detailModalWidth}>
         {selectedProduct && (
           <div className="detail-sheet">
             <div className="detail-sheet__hero">
@@ -446,11 +450,11 @@ const ProductList: React.FC = () => {
         )}
       </Modal>
 
-      <Modal open={addModalVisible} title="新建商品" footer={null} onCancel={() => setAddModalVisible(false)} width={1100} destroyOnHidden>
+      <Modal open={addModalVisible} title="新建商品" footer={null} onCancel={() => setAddModalVisible(false)} width={formModalWidth} destroyOnHidden>
         <ProductForm categories={categories} suppliers={suppliers} onSubmit={handleAddSubmit} onCancel={() => setAddModalVisible(false)} loading={saveLoading} />
       </Modal>
 
-      <Modal open={editModalVisible} title="编辑商品" footer={null} onCancel={() => setEditModalVisible(false)} width={1100} destroyOnHidden>
+      <Modal open={editModalVisible} title="编辑商品" footer={null} onCancel={() => setEditModalVisible(false)} width={formModalWidth} destroyOnHidden>
         {selectedProduct && (
           <ProductForm
             categories={categories}

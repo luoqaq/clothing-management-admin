@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Descriptions, Form, Input, Modal, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Descriptions, Form, Grid, Input, Modal, Table, Tag, Typography, message } from 'antd';
 import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
@@ -18,6 +18,7 @@ const orderStatusMap: Record<OrderStatus, { text: string; color: string }> = {
 };
 
 const OrderList: React.FC = () => {
+  const screens = Grid.useBreakpoint();
   const {
     orders,
     currentOrder,
@@ -41,6 +42,8 @@ const OrderList: React.FC = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [refundForm] = Form.useForm();
   const [cancelForm] = Form.useForm();
+  const addModalWidth = screens.lg ? 1100 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
+  const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
   useEffect(() => {
     void getOrders({ page: 1, pageSize: 10 });
@@ -250,11 +253,11 @@ const OrderList: React.FC = () => {
         />
       </Card>
 
-      <Modal open={addVisible} title="新建订单" footer={null} width={1100} onCancel={() => setAddVisible(false)} destroyOnHidden>
+      <Modal open={addVisible} title="新建订单" footer={null} width={addModalWidth} onCancel={() => setAddVisible(false)} destroyOnHidden>
         <OrderForm onSubmit={handleCreateOrder} onCancel={() => setAddVisible(false)} loading={submitLoading} />
       </Modal>
 
-      <Modal open={detailVisible} title="订单详情" footer={null} onCancel={() => setDetailVisible(false)} width={960}>
+      <Modal open={detailVisible} title="订单详情" footer={null} onCancel={() => setDetailVisible(false)} width={detailModalWidth}>
         {currentOrder && (
           <div className="detail-sheet">
             <Descriptions bordered column={2} className="detail-sheet__descriptions">

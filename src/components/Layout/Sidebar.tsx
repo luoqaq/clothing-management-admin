@@ -49,17 +49,21 @@ const menuItems: MenuItem[] = [
 
 interface SidebarProps {
   collapsed: boolean;
+  compact?: boolean;
+  onNavigate?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, compact = false, onNavigate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedKeys, setSelectedKeys] = useState([location.pathname]);
+  const isCollapsedView = !compact && collapsed;
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     const path = String(key);
     setSelectedKeys([path]);
     navigate(path);
+    onNavigate?.();
   };
 
   // 查找匹配的菜单项
@@ -69,23 +73,23 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
 
   return (
     <Sider
-      width={272}
+      width={compact ? 288 : 272}
       theme="light"
       trigger={null}
       collapsible
       collapsed={collapsed}
-      collapsedWidth={92}
-      className={`app-sider ${collapsed ? 'app-sider--collapsed' : ''}`}
+      collapsedWidth={compact ? 0 : 92}
+      className={`app-sider ${collapsed ? 'app-sider--collapsed' : ''} ${compact ? 'app-sider--compact' : ''} ${compact && !collapsed ? 'app-sider--open' : ''}`}
     >
       <div
-        className={`brand-panel ${collapsed ? 'brand-panel--collapsed' : ''}`}
+        className={`brand-panel ${isCollapsedView ? 'brand-panel--collapsed' : ''}`}
       >
         <img
           src={BRAND_LOGO}
           alt={BRAND_NAME}
           className="brand-panel__logo"
         />
-        {!collapsed && (
+        {!isCollapsedView && (
           <div className="brand-panel__copy">
             <Text strong className="brand-panel__title">
               {BRAND_NAME}

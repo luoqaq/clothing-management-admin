@@ -29,6 +29,15 @@ function buildSkuCode(productCode?: string, size?: string, color?: string): stri
   return parts.join('-');
 }
 
+function formatDecimalInput(value?: string | number | null): string {
+  if (value === undefined || value === null || value === '') {
+    return '';
+  }
+
+  const nextValue = String(value);
+  return nextValue.replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
+}
+
 const ProductForm: React.FC<ProductFormProps> = ({
   categories,
   suppliers,
@@ -46,7 +55,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       form.resetFields();
       form.setFieldsValue({
         productCode: '',
-        status: 'draft',
+        status: 'active',
         specifications: [
           {
             color: '',
@@ -312,12 +321,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       </Col>
                       <Col xs={24} md={6}>
                         <Form.Item {...restField} name={[name, 'salePrice']} label="售价" rules={[{ required: true }]}>
-                          <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+                          <InputNumber min={0} precision={2} formatter={formatDecimalInput} style={{ width: '100%' }} />
                         </Form.Item>
                       </Col>
                       <Col xs={24} md={6}>
                         <Form.Item {...restField} name={[name, 'costPrice']} label="成本价" rules={[{ required: true }]}>
-                          <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+                          <InputNumber min={0} precision={2} formatter={formatDecimalInput} style={{ width: '100%' }} />
                         </Form.Item>
                       </Col>
                       <Col xs={24} md={6}>
