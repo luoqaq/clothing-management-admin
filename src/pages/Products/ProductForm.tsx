@@ -150,6 +150,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   return (
     <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
+      <div className="editor-form__toolbar">
+        <Space>
+          <Button onClick={onCancel}>取消</Button>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            disabled={isMainImagesUploading || isDetailImagesUploading}
+          >
+            保存商品
+          </Button>
+        </Space>
+      </div>
+
       <Card className="form-panel">
         <div className="form-panel__header">
           <div>
@@ -352,15 +366,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
           <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
         </Form.Item>
       </Card>
-
-      <Form.Item className="form-actions">
-        <Space>
-          <Button onClick={onCancel}>取消</Button>
-          <Button type="primary" htmlType="submit" loading={loading} disabled={isMainImagesUploading || isDetailImagesUploading}>
-            保存商品
-          </Button>
-        </Space>
-      </Form.Item>
     </Form>
   );
 };

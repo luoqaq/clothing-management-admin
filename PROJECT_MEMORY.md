@@ -1,6 +1,30 @@
 # 服装管理后台前端 - 项目记忆
 
-最近更新：2026-03-27
+最近更新：2026-03-31
+
+## 会话更新（2026-03-31）
+- 已调整商品表单与订单表单的主操作区位置：
+  - 商品新增/编辑页的“保存商品”按钮已从底部移到表单顶部右上角
+  - 订单新建页的“创建订单”按钮已从底部移到表单顶部右上角
+  - 顶部操作区已改为吸顶固定，滚动长表单时按钮会持续停留在顶部
+  - 移动端下操作区自动左对齐，避免窄屏布局拥挤
+- 本次验证已执行：
+  - `npm run build` 通过
+
+## 会话更新（2026-03-31）
+- 已完成生产前端目录部署方式切换：
+  - `/var/clothing/admin` 已切换为标准 git 工作区
+  - 远端改为 `https://github.com/luoqaq/clothing-management-admin.git`
+  - 当前线上前端仓库 HEAD：`4c877ad`
+- 已在生产机重新完成前端构建：
+  - 通过 `PATH=/usr/local/node20-bin:$PATH` 显式使用 Node 20 / npm 20 执行构建
+  - 重新产出 `/var/clothing/admin/dist`
+- 本次线上验证已执行：
+  - `curl -I http://clothing.chuchu9.cn` 返回 `200`
+  - `POST http://clothing.chuchu9.cn/api/auth/login` 返回 `200`
+- 注意：
+  - 当前生产机默认 `node` 仍指向 Node 18，前端构建必须显式切到 `/usr/local/node20-bin`
+  - 若后续前端首页再次出现 `500`，优先检查 `/var/clothing/admin/dist` 是否存在，再检查 Node 版本和构建命令
 
 ## 会话更新（2026-03-30）
 - 已完成前端构建体积优化：

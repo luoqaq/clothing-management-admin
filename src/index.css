@@ -612,6 +612,17 @@ img {
   gap: 16px;
 }
 
+.editor-form__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  padding: 8px 0 4px;
+  background: linear-gradient(180deg, rgba(246, 240, 231, 0.96) 0%, rgba(246, 240, 231, 0.86) 72%, rgba(246, 240, 231, 0) 100%);
+  backdrop-filter: blur(10px);
+}
+
 .product-form__select.ant-select.ant-select-single {
   background: transparent !important;
 }
@@ -1520,6 +1531,10 @@ img {
   .content-panel__header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .editor-form__toolbar {
+    justify-content: flex-start;
   }
 
   .product-form__top-grid,

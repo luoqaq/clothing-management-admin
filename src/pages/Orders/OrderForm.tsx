@@ -155,6 +155,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
 
   return (
     <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ discountAmount: 0 }} className="editor-form">
+      <div className="editor-form__toolbar">
+        <Space>
+          <Button onClick={onCancel}>取消</Button>
+          <Button type="primary" htmlType="submit" loading={loading}>
+            创建订单
+          </Button>
+        </Space>
+      </div>
+
       <Card className="form-panel">
         <div className="form-panel__header">
           <div>
@@ -319,15 +328,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           </Col>
         </Row>
       </Card>
-
-      <div className="form-actions">
-        <Space>
-          <Button onClick={onCancel}>取消</Button>
-          <Button type="primary" htmlType="submit" loading={loading}>
-            创建订单
-          </Button>
-        </Space>
-      </div>
 
       <Modal
         open={selectorVisible}
