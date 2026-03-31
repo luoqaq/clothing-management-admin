@@ -76,6 +76,68 @@ export interface Product {
   updatedAt: string;
 }
 
+export type ImportSourceType = 'excel' | 'image';
+export type ImportIssueLevel = 'error' | 'warning';
+
+export interface ImportDraftSpecification {
+  rowKey: string;
+  barcode?: string | null;
+  color: string;
+  size: string;
+  salePrice: number;
+  costPrice: number;
+  stock: number;
+  status: ProductSpecificationStatus;
+}
+
+export interface ImportDraftProduct {
+  rowKey: string;
+  source: ImportSourceType;
+  productCode: string;
+  name: string;
+  description?: string | null;
+  categoryId?: number | null;
+  categoryName?: string | null;
+  supplierId?: number | null;
+  supplierName?: string | null;
+  tags: string[];
+  status: ProductStatus;
+  specifications: ImportDraftSpecification[];
+}
+
+export interface ImportIssue {
+  level: ImportIssueLevel;
+  rowKey: string;
+  field: string;
+  message: string;
+  specRowKey?: string;
+}
+
+export interface ImportParseResult {
+  drafts: ImportDraftProduct[];
+  issues: ImportIssue[];
+}
+
+export interface BulkImportResultItem {
+  rowKey: string;
+  productCode: string;
+  status: 'success' | 'failed';
+  message: string;
+  productId?: number;
+}
+
+export interface BulkImportResult {
+  successCount: number;
+  failureCount: number;
+  results: BulkImportResultItem[];
+}
+
+export interface ExcelImportPayload {
+  fileName: string;
+  headers: string[];
+  rows: Array<Record<string, string | number | boolean | null>>;
+}
+
 export interface ProductFilters {
   search?: string;
   categoryId?: number;

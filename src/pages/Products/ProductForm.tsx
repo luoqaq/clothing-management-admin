@@ -3,17 +3,9 @@ import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Typogr
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductCategory, Supplier } from '../../types';
 import ImageUploadField from '../../components/ImageUploadField';
+import { SIZE_OPTIONS } from '../../constants/productOptions';
 
 const { Title, Text } = Typography;
-const SIZE_OPTIONS = [
-  { label: 'XS', value: 'XS' },
-  { label: 'S', value: 'S' },
-  { label: 'M', value: 'M' },
-  { label: 'L', value: 'L' },
-  { label: 'XL', value: 'XL' },
-  { label: 'XXL', value: 'XXL' },
-  { label: 'F / 均码', value: 'F' },
-];
 
 interface ProductFormProps {
   categories: ProductCategory[];

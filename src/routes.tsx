@@ -8,6 +8,7 @@ import PageNotFound from './pages/PageNotFound';
 // 懒加载组件
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ProductList = React.lazy(() => import('./pages/Products/List'));
+const ProductImportPage = React.lazy(() => import('./pages/Products/Import'));
 const OrderList = React.lazy(() => import('./pages/Orders/List'));
 const StatisticsPage = React.lazy(() => import('./pages/Statistics'));
 const ConfigurationPage = React.lazy(() => import('./pages/Configuration'));
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <ProductList />,
+          },
+          {
+            path: 'import',
+            element: <ProductImportPage />,
           },
           {
             path: 'detail/:id',

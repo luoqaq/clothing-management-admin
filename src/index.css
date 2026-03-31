@@ -129,6 +129,261 @@ img {
   transition: margin 0.24s ease;
 }
 
+.page-card.ant-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  box-shadow: var(--shadow-soft);
+  background: var(--bg-card);
+}
+
+.import-draft-collapse.ant-collapse {
+  background: transparent;
+  border: 0;
+}
+
+.import-draft-collapse.ant-collapse > .ant-collapse-item {
+  margin-bottom: 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 251, 245, 0.78);
+}
+
+.import-draft-collapse.ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  align-items: center;
+  padding: 14px 18px;
+}
+
+.import-draft-collapse.ant-collapse .ant-collapse-content > .ant-collapse-content-box {
+  padding: 18px;
+}
+
+.import-draft-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.import-draft-summary__main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.import-draft-summary__main .ant-typography:first-child {
+  color: var(--text-strong);
+}
+
+.import-draft-summary__main .ant-typography:last-child {
+  white-space: nowrap;
+}
+
+.import-draft-summary__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.import-draft-editor {
+  padding: 2px 0 4px;
+}
+
+.import-field-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.import-field {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.import-field--wide {
+  grid-column: 1 / -1;
+}
+
+.import-field .ant-typography {
+  margin-bottom: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.import-field > .ant-input,
+.import-field > .ant-input-number,
+.import-field > .ant-select,
+.import-field > .ant-input-textarea {
+  grid-column: 2;
+}
+
+.import-field > .ant-space {
+  grid-column: 2;
+}
+
+.import-field .ant-input,
+.import-field .ant-input-number,
+.import-field .ant-select.ant-select-single,
+.import-field .ant-input-affix-wrapper,
+.import-field .ant-input-textarea textarea {
+  border-radius: 12px !important;
+}
+
+.import-field .ant-input,
+.import-field .ant-input-number-input,
+.import-field .ant-input-textarea textarea,
+.import-field .ant-select-selection-item,
+.import-field .ant-select-selection-placeholder {
+  font-size: 13px;
+}
+
+.import-field .ant-input,
+.import-field .ant-input-number,
+.import-field .ant-select.ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.import-field .ant-input-textarea textarea {
+  min-height: 34px !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(176, 157, 138, 0.28) !important;
+  box-shadow: none !important;
+}
+
+.import-field .ant-input,
+.import-field .ant-input-textarea textarea {
+  padding-inline: 11px;
+}
+
+.import-field .ant-input-number {
+  width: 100%;
+}
+
+.import-field .ant-input-number-input-wrap input {
+  height: 32px;
+}
+
+.import-field .ant-select.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  display: flex;
+  align-items: center;
+  padding-inline: 11px !important;
+}
+
+.import-field .ant-select.ant-select-single .ant-select-selection-wrap,
+.import-field .ant-select.ant-select-single .ant-select-selection-search,
+.import-field .ant-select.ant-select-single .ant-select-selection-item,
+.import-field .ant-select.ant-select-single .ant-select-selection-placeholder {
+  line-height: 32px !important;
+  height: 32px;
+}
+
+.import-field .ant-input:hover,
+.import-field .ant-input:focus,
+.import-field .ant-input:focus-within,
+.import-field .ant-input-number:hover,
+.import-field .ant-input-number-focused,
+.import-field .ant-select:hover .ant-select-selector,
+.import-field .ant-select.ant-select-focused .ant-select-selector,
+.import-field .ant-select.ant-select-open .ant-select-selector,
+.import-field .ant-input-textarea textarea:hover,
+.import-field .ant-input-textarea textarea:focus {
+  border-color: rgba(139, 184, 217, 0.72) !important;
+  box-shadow: 0 0 0 2px rgba(139, 184, 217, 0.12) !important;
+}
+
+.import-field .ant-input-textarea textarea {
+  resize: vertical;
+  padding-block: 7px;
+}
+
+.import-spec-table {
+  border: 1px solid rgba(176, 157, 138, 0.22);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 252, 247, 0.72);
+}
+
+.import-spec-table__head,
+.import-spec-table__row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr 1fr 72px;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+}
+
+.import-spec-table__head {
+  background: rgba(232, 241, 248, 0.5);
+  border-bottom: 1px solid rgba(176, 157, 138, 0.18);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.import-spec-table__row + .import-spec-table__row {
+  border-top: 1px solid rgba(176, 157, 138, 0.12);
+}
+
+.import-spec-table__cell {
+  min-width: 0;
+}
+
+.import-spec-table__cell--code,
+.import-spec-table__cell--action {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+}
+
+.import-spec-table__cell--action {
+  justify-content: flex-end;
+}
+
+.import-spec-table .ant-input,
+.import-spec-table .ant-input-number,
+.import-spec-table .ant-select.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  min-height: 32px !important;
+  border-radius: 10px !important;
+}
+
+@media (max-width: 1400px) {
+  .import-field-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .import-field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .import-spec-table {
+    overflow-x: auto;
+  }
+
+  .import-spec-table__head,
+  .import-spec-table__row {
+    min-width: 860px;
+  }
+}
+
+@media (max-width: 640px) {
+  .import-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .import-field {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+}
+
 .app-sider.ant-layout-sider {
   position: fixed;
   inset: 20px auto 20px 20px;

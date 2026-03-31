@@ -5,6 +5,10 @@ import type {
   Supplier,
   PaginatedResponse,
   ProductFilters,
+  ExcelImportPayload,
+  ImportParseResult,
+  ImportDraftProduct,
+  BulkImportResult,
 } from '../types';
 import { normalizeProduct } from '../utils/normalize';
 
@@ -130,5 +134,32 @@ export const productsApi = {
     }
 
     return response;
+  },
+
+  parseExcelImport: async (data: ExcelImportPayload) => {
+    return api.post<ImportParseResult>('/products/import/parse-excel', data, {
+      timeout: 120000,
+    });
+  },
+
+  parseImageImport: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return api.post<ImportParseResult>('/products/import/parse-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 120000,
+    });
+  },
+
+  bulkCreateProducts: async (products: ImportDraftProduct[], createMissingSuppliers: boolean) => {
+    return api.post<BulkImportResult>('/products/import/bulk-create', {
+      products,
+      createMissingSuppliers,
+    }, {
+      timeout: 120000,
+    });
   },
 };

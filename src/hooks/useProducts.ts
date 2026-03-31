@@ -9,6 +9,9 @@ import {
   fetchCategories,
   fetchSuppliers,
   updateProductStock,
+  parseExcelImport as parseExcelImportAction,
+  parseImageImport as parseImageImportAction,
+  bulkCreateProducts as bulkCreateProductsAction,
   createCategory,
   updateCategory as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
@@ -27,7 +30,14 @@ import {
   selectProductPagination,
   selectProductFilters,
 } from '../features/products/productSlice';
-import type { Product, ProductFilters, ProductCategory, Supplier } from '../types';
+import type {
+  Product,
+  ProductFilters,
+  ProductCategory,
+  Supplier,
+  ExcelImportPayload,
+  ImportDraftProduct,
+} from '../types';
 
 export const useProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -176,6 +186,33 @@ export const useProducts = () => {
     }
   };
 
+  const parseExcelImport = async (payload: ExcelImportPayload) => {
+    try {
+      const result = await dispatch(parseExcelImportAction(payload)).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const parseImageImport = async (file: File) => {
+    try {
+      const result = await dispatch(parseImageImportAction(file)).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const bulkCreateProducts = async (products: ImportDraftProduct[], createMissingSuppliers: boolean) => {
+    try {
+      const result = await dispatch(bulkCreateProductsAction({ products, createMissingSuppliers })).unwrap();
+      return result;
+    } catch (err) {
+      return null;
+    }
+  };
+
   // 清除当前商品
   const handleClearCurrentProduct = () => {
     dispatch(clearCurrentProduct());
@@ -208,6 +245,9 @@ export const useProducts = () => {
     getCategories,
     getSuppliers,
     updateStock,
+    parseExcelImport,
+    parseImageImport,
+    bulkCreateProducts,
     addCategory,
     updateCategory,
     deleteCategory,

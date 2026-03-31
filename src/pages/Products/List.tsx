@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -26,6 +27,7 @@ const { Title, Text } = Typography;
 
 const ProductList: React.FC = () => {
   const screens = Grid.useBreakpoint();
+  const navigate = useNavigate();
   const {
     products,
     categories,
@@ -303,9 +305,12 @@ const ProductList: React.FC = () => {
               商品管理
             </Title>
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
-            新建商品
-          </Button>
+          <Space wrap>
+            <Button onClick={() => navigate('/products/import')}>批量导入</Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
+              新建商品
+            </Button>
+          </Space>
         </div>
 
         <div className="filter-toolbar">

@@ -7,6 +7,8 @@ import type {
   ProductCategory,
   Supplier,
   ProductFilters,
+  ExcelImportPayload,
+  ImportDraftProduct,
 } from '../../types';
 
 // 初始状态
@@ -166,6 +168,60 @@ export const updateProductStock = createAsyncThunk(
       }
 
       return rejectWithValue(response.message || '更新库存失败');
+    } catch (error) {
+      return rejectWithValue('网络错误，请稍后重试');
+    }
+  }
+);
+
+export const parseExcelImport = createAsyncThunk(
+  'products/parseExcelImport',
+  async (data: ExcelImportPayload, { rejectWithValue }) => {
+    try {
+      const response = await productsApi.parseExcelImport(data);
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      return rejectWithValue(response.message || '解析 Excel 失败');
+    } catch (error) {
+      return rejectWithValue('网络错误，请稍后重试');
+    }
+  }
+);
+
+export const parseImageImport = createAsyncThunk(
+  'products/parseImageImport',
+  async (file: File, { rejectWithValue }) => {
+    try {
+      const response = await productsApi.parseImageImport(file);
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      return rejectWithValue(response.message || '解析截图失败');
+    } catch (error) {
+      return rejectWithValue('网络错误，请稍后重试');
+    }
+  }
+);
+
+export const bulkCreateProducts = createAsyncThunk(
+  'products/bulkCreateProducts',
+  async (
+    { products, createMissingSuppliers }: { products: ImportDraftProduct[]; createMissingSuppliers: boolean },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await productsApi.bulkCreateProducts(products, createMissingSuppliers);
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      return rejectWithValue(response.message || '批量导入失败');
     } catch (error) {
       return rejectWithValue('网络错误，请稍后重试');
     }
@@ -468,6 +524,48 @@ const productSlice = createSlice({
         state.error = null;
       })
       .addCase(updateProductStock.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(parseExcelImport.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(parseExcelImport.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(parseExcelImport.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(parseImageImport.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(parseImageImport.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(parseImageImport.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(bulkCreateProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(bulkCreateProducts.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(bulkCreateProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
