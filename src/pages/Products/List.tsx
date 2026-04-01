@@ -243,18 +243,13 @@ const ProductList: React.FC = () => {
           return <Text type="secondary">暂无规格</Text>;
         }
 
-        const previewItems = record.specifications.slice(0, 2);
-
         return (
           <div>
-            {previewItems.map((item) => (
+            {record.specifications.map((item) => (
               <div key={item.id} style={{ lineHeight: 1.6 }}>
                 {item.color} / {item.size} · 库存 {item.stock}
               </div>
             ))}
-            {record.specifications.length > previewItems.length ? (
-              <Text type="secondary">等 {record.specifications.length} 个规格</Text>
-            ) : null}
           </div>
         );
       },
@@ -406,6 +401,7 @@ const ProductList: React.FC = () => {
             current: pagination.page,
             pageSize: pagination.pageSize,
             total: pagination.total,
+            showTotal: (total) => `共 ${total} 条`,
             onChange: (page, pageSize) => void loadProducts({ page, pageSize, filters: buildFilters() }),
           }}
         />

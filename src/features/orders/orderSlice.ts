@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { ordersApi } from '../../api/orders';
 import type { RootState } from '../../store';
 import type { OrderState, Order, OrderFilters, OrderStatus } from '../../types';
+import { getErrorMessage } from '../../utils/error';
 
 // 初始状态
 const initialState: OrderState = {
@@ -30,7 +31,7 @@ export const fetchOrders = createAsyncThunk(
 
       return rejectWithValue(response.message || '获取订单列表失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '获取订单列表失败'));
     }
   }
 );
@@ -48,7 +49,7 @@ export const fetchOrderById = createAsyncThunk(
 
       return rejectWithValue(response.message || '获取订单详情失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '获取订单详情失败'));
     }
   }
 );
@@ -66,7 +67,7 @@ export const createOrder = createAsyncThunk(
 
       return rejectWithValue(response.message || '创建订单失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '创建订单失败'));
     }
   }
 );
@@ -84,7 +85,7 @@ export const updateOrderStatus = createAsyncThunk(
 
       return rejectWithValue(response.message || '更新订单状态失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '更新订单状态失败'));
     }
   }
 );
@@ -105,7 +106,7 @@ export const shipOrder = createAsyncThunk(
 
       return rejectWithValue(response.message || '发货失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '发货失败'));
     }
   }
 );
@@ -123,7 +124,7 @@ export const cancelOrder = createAsyncThunk(
 
       return rejectWithValue(response.message || '取消订单失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '取消订单失败'));
     }
   }
 );
@@ -141,7 +142,7 @@ export const refundOrder = createAsyncThunk(
 
       return rejectWithValue(response.message || '退款失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '退款失败'));
     }
   }
 );

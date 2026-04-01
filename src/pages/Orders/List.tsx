@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
 import { useOrders } from '../../hooks/useOrders';
 import OrderForm from './OrderForm';
+import { getErrorMessage } from '../../utils/error';
 
 const { Title, Text } = Typography;
 
@@ -68,9 +69,13 @@ const OrderList: React.FC = () => {
   };
 
   const handleViewDetail = async (id: number) => {
-    const result = await getOrderById(id);
-    if (result) {
-      setDetailVisible(true);
+    try {
+      const result = await getOrderById(id);
+      if (result) {
+        setDetailVisible(true);
+      }
+    } catch (err) {
+      message.error(getErrorMessage(err, '获取订单详情失败'));
     }
   };
 
@@ -83,6 +88,8 @@ const OrderList: React.FC = () => {
         setAddVisible(false);
         void reload();
       }
+    } catch (err) {
+      message.error(getErrorMessage(err, '创建订单失败'));
     } finally {
       setSubmitLoading(false);
     }
@@ -102,23 +109,31 @@ const OrderList: React.FC = () => {
 
   const submitRefund = async () => {
     if (!selectedOrder) return;
-    const values = await refundForm.validateFields();
-    const result = await refundOrder(selectedOrder.id, values);
-    if (result) {
-      message.success('退款已处理');
-      setRefundVisible(false);
-      void reload();
+    try {
+      const values = await refundForm.validateFields();
+      const result = await refundOrder(selectedOrder.id, values);
+      if (result) {
+        message.success('退款已处理');
+        setRefundVisible(false);
+        void reload();
+      }
+    } catch (err) {
+      message.error(getErrorMessage(err, '退款失败'));
     }
   };
 
   const submitCancel = async () => {
     if (!selectedOrder) return;
-    const values = await cancelForm.validateFields();
-    const result = await cancelOrder(selectedOrder.id, values.reason);
-    if (result) {
-      message.success('订单已取消');
-      setCancelVisible(false);
-      void reload();
+    try {
+      const values = await cancelForm.validateFields();
+      const result = await cancelOrder(selectedOrder.id, values.reason);
+      if (result) {
+        message.success('订单已取消');
+        setCancelVisible(false);
+        void reload();
+      }
+    } catch (err) {
+      message.error(getErrorMessage(err, '取消订单失败'));
     }
   };
 
@@ -248,6 +263,7 @@ const OrderList: React.FC = () => {
             current: pagination.page,
             pageSize: pagination.pageSize,
             total: pagination.total,
+            showTotal: (total) => `共 ${total} 条`,
             onChange: (page, pageSize) => void reload({ page, pageSize, filters }),
           }}
         />

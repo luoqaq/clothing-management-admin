@@ -1,14 +1,27 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import dayjs from 'dayjs';
 import { statisticsApi } from '../../api/statistics';
 import type { RootState } from '../../store';
-import type { StatisticsState, DailySalesData, ProductSalesRanking, CategorySalesData, BrandSalesData, RegionSalesData } from '../../types';
-import dayjs from 'dayjs';
+import type {
+  CategorySalesData,
+  CostProductRankingItem,
+  CostOverviewResponse,
+  CustomerAnalysisResponse,
+  DailySalesData,
+  ProductSalesRanking,
+  SalesOverviewResponse,
+  StatisticsState,
+} from '../../types';
 
-// 初始状态
 const initialState: StatisticsState = {
   salesData: [],
-  productRankings: [],
-  categorySales: [],
+  salesProductRanking: [],
+  grossProfitAnalysis: [],
+  salesCategoryAnalysis: [],
+  customerAnalysis: null,
+  costOverview: null,
+  costCategoryAnalysis: [],
+  costProductRanking: [],
   brandSales: [],
   regionSales: [],
   summary: null,
@@ -20,274 +33,221 @@ const initialState: StatisticsState = {
   },
 };
 
-// 获取销售概览
-export const fetchSalesOverview = createAsyncThunk(
+export const fetchSalesOverview = createAsyncThunk<SalesOverviewResponse, { start?: string; end?: string } | undefined, { rejectValue: string }>(
   'statistics/fetchSalesOverview',
-  async (
-    params: { start?: string; end?: string } | undefined,
-    { rejectWithValue }
-  ) => {
+  async (params, { rejectWithValue }) => {
     try {
       const response = await statisticsApi.getSalesOverview(params);
-
-      if (response.success && response.data) {
-        return response.data;
-      }
-
+      if (response.success && response.data) return response.data;
       return rejectWithValue(response.message || '获取销售概览失败');
-    } catch (error) {
+    } catch {
       return rejectWithValue('网络错误，请稍后重试');
     }
   }
 );
 
-// 获取每日销售数据
-export const fetchDailySalesData = createAsyncThunk(
+export const fetchDailySalesData = createAsyncThunk<DailySalesData[], { start: string; end: string }, { rejectValue: string }>(
   'statistics/fetchDailySalesData',
-  async (
-    params: { start: string; end: string },
-    { rejectWithValue }
-  ) => {
+  async (params, { rejectWithValue }) => {
     try {
       const response = await statisticsApi.getDailySales(params);
-
-      if (response.success && response.data) {
-        return response.data;
-      }
-
-      return rejectWithValue(response.message || '获取每日销售数据失败');
-    } catch (error) {
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取销售趋势失败');
+    } catch {
       return rejectWithValue('网络错误，请稍后重试');
     }
   }
 );
 
-// 获取商品销售排名
-export const fetchProductRankings = createAsyncThunk(
-  'statistics/fetchProductRankings',
-  async (
-    params: { dateRange?: { start: string; end: string }; limit?: number } | undefined,
-    { rejectWithValue }
-  ) => {
+export const fetchSalesProductRanking = createAsyncThunk<ProductSalesRanking[], { dateRange?: { start: string; end: string }; limit?: number } | undefined, { rejectValue: string }>(
+  'statistics/fetchSalesProductRanking',
+  async (params, { rejectWithValue }) => {
     try {
       const response = await statisticsApi.getProductRankings(params);
-
-      if (response.success && response.data) {
-        return response.data;
-      }
-
-      return rejectWithValue(response.message || '获取商品销售排名失败');
-    } catch (error) {
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取商品销售排行失败');
+    } catch {
       return rejectWithValue('网络错误，请稍后重试');
     }
   }
 );
 
-// 获取类别销售数据
-export const fetchCategorySales = createAsyncThunk(
-  'statistics/fetchCategorySales',
-  async (
-    params: { start?: string; end?: string } | undefined,
-    { rejectWithValue }
-  ) => {
+export const fetchSalesCategoryAnalysis = createAsyncThunk<CategorySalesData[], { start?: string; end?: string } | undefined, { rejectValue: string }>(
+  'statistics/fetchSalesCategoryAnalysis',
+  async (params, { rejectWithValue }) => {
     try {
       const response = await statisticsApi.getCategorySales(params);
-
-      if (response.success && response.data) {
-        return response.data;
-      }
-
-      return rejectWithValue(response.message || '获取类别销售数据失败');
-    } catch (error) {
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取商品类别销售情况失败');
+    } catch {
       return rejectWithValue('网络错误，请稍后重试');
     }
   }
 );
 
-// 获取品牌销售数据
-export const fetchBrandSales = createAsyncThunk(
-  'statistics/fetchBrandSales',
-  async (
-    params: { start?: string; end?: string } | undefined,
-    { rejectWithValue }
-  ) => {
+export const fetchCustomerAnalysis = createAsyncThunk<CustomerAnalysisResponse, { start?: string; end?: string } | undefined, { rejectValue: string }>(
+  'statistics/fetchCustomerAnalysis',
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await statisticsApi.getBrandSales(params);
-
-      if (response.success && response.data) {
-        return response.data;
-      }
-
-      return rejectWithValue(response.message || '获取品牌销售数据失败');
-    } catch (error) {
+      const response = await statisticsApi.getCustomerAnalysis(params);
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取客户分析失败');
+    } catch {
       return rejectWithValue('网络错误，请稍后重试');
     }
   }
 );
 
-// 获取区域销售数据
-export const fetchRegionSales = createAsyncThunk(
-  'statistics/fetchRegionSales',
-  async (
-    params: { start?: string; end?: string } | undefined,
-    { rejectWithValue }
-  ) => {
+export const fetchGrossProfitAnalysis = createAsyncThunk<ProductSalesRanking[], { dateRange?: { start: string; end: string }; limit?: number } | undefined, { rejectValue: string }>(
+  'statistics/fetchGrossProfitAnalysis',
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await statisticsApi.getRegionSales(params);
-
-      if (response.success && response.data) {
-        return response.data;
-      }
-
-      return rejectWithValue(response.message || '获取区域销售数据失败');
-    } catch (error) {
+      const response = await statisticsApi.getGrossProfitAnalysis(params);
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取商品毛利分析失败');
+    } catch {
       return rejectWithValue('网络错误，请稍后重试');
     }
   }
 );
 
-// 统计状态切片
+export const fetchCostOverview = createAsyncThunk<CostOverviewResponse, { start?: string; end?: string } | undefined, { rejectValue: string }>(
+  'statistics/fetchCostOverview',
+  async (params, { rejectWithValue }) => {
+    try {
+      const response = await statisticsApi.getCostOverview(params);
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取成本概览失败');
+    } catch {
+      return rejectWithValue('网络错误，请稍后重试');
+    }
+  }
+);
+
+export const fetchCostCategoryAnalysis = createAsyncThunk<CategorySalesData[], { start?: string; end?: string } | undefined, { rejectValue: string }>(
+  'statistics/fetchCostCategoryAnalysis',
+  async (params, { rejectWithValue }) => {
+    try {
+      const response = await statisticsApi.getCostCategoryAnalysis(params);
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取分类成本分析失败');
+    } catch {
+      return rejectWithValue('网络错误，请稍后重试');
+    }
+  }
+);
+
+export const fetchCostProductRanking = createAsyncThunk<CostProductRankingItem[], { dateRange?: { start: string; end: string }; limit?: number } | undefined, { rejectValue: string }>(
+  'statistics/fetchCostProductRanking',
+  async (params, { rejectWithValue }) => {
+    try {
+      const response = await statisticsApi.getCostProductRanking(params);
+      if (response.success && response.data) return response.data;
+      return rejectWithValue(response.message || '获取商品成本排行失败');
+    } catch {
+      return rejectWithValue('网络错误，请稍后重试');
+    }
+  }
+);
+
 const statisticsSlice = createSlice({
   name: 'statistics',
   initialState,
   reducers: {
-    // 设置加载状态
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
-    },
-
-    // 设置错误信息
-    setError: (state, action: PayloadAction<string | null>) => {
-      state.error = action.payload;
-    },
-
-    // 设置日期范围
-    setDateRange: (
-      state,
-      action: PayloadAction<{ start: string; end: string }>
-    ) => {
+    setDateRange: (state, action: PayloadAction<{ start: string; end: string }>) => {
       state.dateRange = action.payload;
     },
-
-    // 清除统计数据
     clearStatistics: (state) => {
       state.salesData = [];
-      state.productRankings = [];
-      state.categorySales = [];
-      state.brandSales = [];
-      state.regionSales = [];
+      state.salesProductRanking = [];
+      state.grossProfitAnalysis = [];
+      state.salesCategoryAnalysis = [];
+      state.customerAnalysis = null;
+      state.costOverview = null;
+      state.costCategoryAnalysis = [];
+      state.costProductRanking = [];
       state.summary = null;
     },
   },
   extraReducers: (builder) => {
-    // 获取销售概览
+    const setPending = (state: StatisticsState) => {
+      state.loading = true;
+      state.error = null;
+    };
+    const setRejected = (state: StatisticsState, action: any) => {
+      state.loading = false;
+      state.error = typeof action.payload === 'string' ? action.payload : '加载失败';
+    };
+
     builder
-      .addCase(fetchSalesOverview.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(fetchSalesOverview.pending, setPending)
       .addCase(fetchSalesOverview.fulfilled, (state, action) => {
         state.loading = false;
         state.summary = action.payload;
-        state.error = null;
       })
-      .addCase(fetchSalesOverview.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 获取每日销售数据
-    builder
-      .addCase(fetchDailySalesData.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(fetchSalesOverview.rejected, setRejected)
+      .addCase(fetchDailySalesData.pending, setPending)
       .addCase(fetchDailySalesData.fulfilled, (state, action) => {
         state.loading = false;
         state.salesData = action.payload;
-        state.error = null;
       })
-      .addCase(fetchDailySalesData.rejected, (state, action) => {
+      .addCase(fetchDailySalesData.rejected, setRejected)
+      .addCase(fetchSalesProductRanking.pending, setPending)
+      .addCase(fetchSalesProductRanking.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 获取商品销售排名
-    builder
-      .addCase(fetchProductRankings.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.salesProductRanking = action.payload;
       })
-      .addCase(fetchProductRankings.fulfilled, (state, action) => {
+      .addCase(fetchSalesProductRanking.rejected, setRejected)
+      .addCase(fetchSalesCategoryAnalysis.pending, setPending)
+      .addCase(fetchSalesCategoryAnalysis.fulfilled, (state, action) => {
         state.loading = false;
-        state.productRankings = action.payload;
-        state.error = null;
+        state.salesCategoryAnalysis = action.payload;
       })
-      .addCase(fetchProductRankings.rejected, (state, action) => {
+      .addCase(fetchSalesCategoryAnalysis.rejected, setRejected)
+      .addCase(fetchCustomerAnalysis.pending, setPending)
+      .addCase(fetchCustomerAnalysis.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 获取类别销售数据
-    builder
-      .addCase(fetchCategorySales.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.customerAnalysis = action.payload;
       })
-      .addCase(fetchCategorySales.fulfilled, (state, action) => {
+      .addCase(fetchCustomerAnalysis.rejected, setRejected)
+      .addCase(fetchGrossProfitAnalysis.pending, setPending)
+      .addCase(fetchGrossProfitAnalysis.fulfilled, (state, action) => {
         state.loading = false;
-        state.categorySales = action.payload;
-        state.error = null;
+        state.grossProfitAnalysis = action.payload;
       })
-      .addCase(fetchCategorySales.rejected, (state, action) => {
+      .addCase(fetchGrossProfitAnalysis.rejected, setRejected)
+      .addCase(fetchCostOverview.pending, setPending)
+      .addCase(fetchCostOverview.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 获取品牌销售数据
-    builder
-      .addCase(fetchBrandSales.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.costOverview = action.payload;
       })
-      .addCase(fetchBrandSales.fulfilled, (state, action) => {
+      .addCase(fetchCostOverview.rejected, setRejected)
+      .addCase(fetchCostCategoryAnalysis.pending, setPending)
+      .addCase(fetchCostCategoryAnalysis.fulfilled, (state, action) => {
         state.loading = false;
-        state.brandSales = action.payload;
-        state.error = null;
+        state.costCategoryAnalysis = action.payload;
       })
-      .addCase(fetchBrandSales.rejected, (state, action) => {
+      .addCase(fetchCostCategoryAnalysis.rejected, setRejected)
+      .addCase(fetchCostProductRanking.pending, setPending)
+      .addCase(fetchCostProductRanking.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // 获取区域销售数据
-    builder
-      .addCase(fetchRegionSales.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.costProductRanking = action.payload;
       })
-      .addCase(fetchRegionSales.fulfilled, (state, action) => {
-        state.loading = false;
-        state.regionSales = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchRegionSales.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+      .addCase(fetchCostProductRanking.rejected, setRejected);
   },
 });
 
-// 导出 actions
-export const { setLoading, setError, setDateRange, clearStatistics } = statisticsSlice.actions;
+export const { setDateRange, clearStatistics } = statisticsSlice.actions;
 
-// 选择器
 export const selectSalesData = (state: RootState) => state.statistics.salesData;
-export const selectProductRankings = (state: RootState) => state.statistics.productRankings;
-export const selectCategorySales = (state: RootState) => state.statistics.categorySales;
-export const selectBrandSales = (state: RootState) => state.statistics.brandSales;
-export const selectRegionSales = (state: RootState) => state.statistics.regionSales;
 export const selectSalesSummary = (state: RootState) => state.statistics.summary;
+export const selectCustomerAnalysis = (state: RootState) => state.statistics.customerAnalysis;
+export const selectSalesCategoryAnalysis = (state: RootState) => state.statistics.salesCategoryAnalysis;
+export const selectSalesProductRanking = (state: RootState) => state.statistics.salesProductRanking;
+export const selectGrossProfitAnalysis = (state: RootState) => state.statistics.grossProfitAnalysis;
+export const selectCostOverview = (state: RootState) => state.statistics.costOverview;
+export const selectCostCategoryAnalysis = (state: RootState) => state.statistics.costCategoryAnalysis;
+export const selectCostProductRanking = (state: RootState) => state.statistics.costProductRanking;
 export const selectStatisticsLoading = (state: RootState) => state.statistics.loading;
 export const selectStatisticsError = (state: RootState) => state.statistics.error;
 export const selectDateRange = (state: RootState) => state.statistics.dateRange;

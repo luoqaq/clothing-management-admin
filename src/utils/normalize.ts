@@ -23,6 +23,8 @@ export function normalizeSpecification(specification: ProductSpecification): Pro
     stock: toNumber(specification.stock),
     reservedStock: toNumber(specification.reservedStock),
     availableStock: toNumber(specification.availableStock),
+    cumulativeInboundQuantity: toNumber(specification.cumulativeInboundQuantity),
+    cumulativeCostAmount: toNumber(specification.cumulativeCostAmount),
   };
 }
 

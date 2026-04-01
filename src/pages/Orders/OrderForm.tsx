@@ -18,8 +18,10 @@ import {
   message,
 } from 'antd';
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons';
-import type { Order, Product, ProductSpecification } from '../../types';
+import type { CustomerAgeBucket, Order, Product, ProductSpecification } from '../../types';
+import { customersApi } from '../../api/customers';
 import { useProducts } from '../../hooks/useProducts';
+import { getErrorMessage } from '../../utils/error';
 
 const { Title, Text } = Typography;
 
@@ -53,9 +55,25 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>();
+  const [ageBuckets, setAgeBuckets] = useState<CustomerAgeBucket[]>([]);
 
   useEffect(() => {
     void Promise.all([getProducts({ page: 1, pageSize: 100 }), getCategories()]);
+  }, []);
+
+  useEffect(() => {
+    const loadAgeBuckets = async () => {
+      try {
+        const result = await customersApi.getAgeBuckets();
+        if (result.success && result.data) {
+          setAgeBuckets(result.data);
+        }
+      } catch (err) {
+        message.error(getErrorMessage(err, '获取年龄段失败'));
+      }
+    };
+
+    void loadAgeBuckets();
   }, []);
 
   const specificationRows = useMemo(() => {
@@ -133,6 +151,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
       customerName: values.customerName ? String(values.customerName).trim() : '',
       customerPhone: values.customerPhone ? String(values.customerPhone).trim() : '',
       customerEmail: values.customerEmail ? String(values.customerEmail).trim() : undefined,
+      ageBucketId: values.ageBucketId ? Number(values.ageBucketId) : null,
       items: cartItems.map((item) => ({
         id: 0,
         productId: item.productId,
@@ -327,6 +346,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           <Col xs={24} md={8}>
             <Form.Item name="customerEmail" label="电子邮箱" rules={[{ type: 'email', message: '请输入正确邮箱格式' }]}>
               <Input placeholder="选填" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={8}>
+            <Form.Item name="ageBucketId" label="年龄段">
+              <Select
+                allowClear
+                placeholder="选填"
+                options={ageBuckets.map((item) => ({ label: item.name, value: item.id }))}
+              />
             </Form.Item>
           </Col>
         </Row>

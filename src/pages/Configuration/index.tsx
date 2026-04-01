@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Tabs, Typography, message } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tabs, Typography, message } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { authApi } from '../../api/auth';
+import { customersApi } from '../../api/customers';
 import { useProducts } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
+import { getErrorMessage } from '../../utils/error';
 import { formatRoleLabel, isAdminUser } from '../../utils/role';
-import type { ProductCategory, SalesUser, Supplier } from '../../types';
+import type { CustomerAgeBucket, ProductCategory, SalesUser, Supplier } from '../../types';
 
 const { Title, Text } = Typography;
 
@@ -99,6 +101,29 @@ const SalesUserModal: React.FC<BaseModalProps<SalesUser>> = ({ open, title, data
   );
 };
 
+const CustomerAgeBucketModal: React.FC<BaseModalProps<CustomerAgeBucket>> = ({ open, title, data, onCancel, onSubmit, loading }) => {
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (open) {
+      form.setFieldsValue(data ?? { name: '', sortOrder: 0 });
+    }
+  }, [data, form, open]);
+
+  return (
+    <Modal open={open} title={title} onCancel={onCancel} onOk={() => void form.validateFields().then(onSubmit)} confirmLoading={loading} destroyOnHidden>
+      <Form form={form} layout="vertical">
+        <Form.Item name="name" label="年龄段名称" rules={[{ required: true, message: '请输入年龄段名称' }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="sortOrder" label="排序" initialValue={0}>
+          <InputNumber style={{ width: '100%' }} min={0} />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
 const ConfigurationPage: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = isAdminUser(user);
@@ -122,8 +147,12 @@ const ConfigurationPage: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<ProductCategory | undefined>();
   const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>();
   const [editingSalesUser, setEditingSalesUser] = useState<SalesUser | undefined>();
+  const [editingAgeBucket, setEditingAgeBucket] = useState<CustomerAgeBucket | undefined>();
   const [salesUsers, setSalesUsers] = useState<SalesUser[]>([]);
+  const [ageBuckets, setAgeBuckets] = useState<CustomerAgeBucket[]>([]);
   const [salesUserLoading, setSalesUserLoading] = useState(false);
+  const [ageBucketLoading, setAgeBucketLoading] = useState(false);
+  const [ageBucketModalVisible, setAgeBucketModalVisible] = useState(false);
 
   const loadSalesUsers = async () => {
     if (!isAdmin) {
@@ -137,16 +166,31 @@ const ConfigurationPage: React.FC = () => {
         setSalesUsers(result.data);
       }
     } catch (err: any) {
-      message.error(err?.message || '获取销售账号失败');
+      message.error(getErrorMessage(err, '获取销售账号失败'));
     } finally {
       setSalesUserLoading(false);
+    }
+  };
+
+  const loadAgeBuckets = async () => {
+    if (!isAdmin) return;
+    try {
+      setAgeBucketLoading(true);
+      const result = await customersApi.getAgeBuckets();
+      if (result.success && result.data) {
+        setAgeBuckets(result.data);
+      }
+    } catch (err: any) {
+      message.error(getErrorMessage(err, '获取年龄段失败'));
+    } finally {
+      setAgeBucketLoading(false);
     }
   };
 
   useEffect(() => {
     void getCategories();
     if (isAdmin) {
-      void Promise.all([getSuppliers(), loadSalesUsers()]);
+      void Promise.all([getSuppliers(), loadSalesUsers(), loadAgeBuckets()]);
     }
   }, [isAdmin]);
 
@@ -201,7 +245,26 @@ const ConfigurationPage: React.FC = () => {
         void loadSalesUsers();
       }
     } catch (err: any) {
-      message.error(err?.message || '保存销售账号失败');
+      message.error(getErrorMessage(err, '保存销售账号失败'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAgeBucketSubmit = async (data: { name: string; sortOrder: number }) => {
+    setLoading(true);
+    try {
+      const result = editingAgeBucket
+        ? await customersApi.updateAgeBucket(editingAgeBucket.id, data)
+        : await customersApi.createAgeBucket(data);
+      if (result.success) {
+        message.success(editingAgeBucket ? '年龄段更新成功' : '年龄段创建成功');
+        setAgeBucketModalVisible(false);
+        setEditingAgeBucket(undefined);
+        void loadAgeBuckets();
+      }
+    } catch (err) {
+      message.error(getErrorMessage(err, editingAgeBucket ? '年龄段更新失败' : '年龄段创建失败'));
     } finally {
       setLoading(false);
     }
@@ -377,6 +440,55 @@ const ConfigurationPage: React.FC = () => {
                 </Card>
               ),
             },
+            {
+              key: 'customer-age-buckets',
+              label: '客户年龄段',
+              children: (
+                <Card
+                  className="content-panel"
+                  extra={
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => {
+                        setEditingAgeBucket(undefined);
+                        setAgeBucketModalVisible(true);
+                      }}
+                    >
+                      新增年龄段
+                    </Button>
+                  }
+                >
+                  <Table
+                    className="content-table"
+                    rowKey="id"
+                    loading={ageBucketLoading}
+                    dataSource={ageBuckets}
+                    scroll={{ x: 560 }}
+                    columns={[
+                      { title: '名称', dataIndex: 'name', key: 'name' },
+                      { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 120 },
+                      {
+                        title: '操作',
+                        key: 'actions',
+                        render: (_, record: CustomerAgeBucket) => (
+                          <Space>
+                            <Button type="text" icon={<EditOutlined />} onClick={() => { setEditingAgeBucket(record); setAgeBucketModalVisible(true); }}>
+                              编辑
+                            </Button>
+                            <Popconfirm title="确定删除该年龄段？" onConfirm={() => void customersApi.deleteAgeBucket(record.id).then(() => { void loadAgeBuckets(); })}>
+                              <Button type="text" danger icon={<DeleteOutlined />}>
+                                删除
+                              </Button>
+                            </Popconfirm>
+                          </Space>
+                        ),
+                      },
+                    ]}
+                  />
+                </Card>
+              ),
+            },
           ]}
         />
       ) : (
@@ -418,6 +530,18 @@ const ConfigurationPage: React.FC = () => {
           setEditingSalesUser(undefined);
         }}
         onSubmit={handleSalesUserSubmit}
+        loading={loading}
+      />
+
+      <CustomerAgeBucketModal
+        open={ageBucketModalVisible}
+        title={editingAgeBucket ? '编辑年龄段' : '新增年龄段'}
+        data={editingAgeBucket}
+        onCancel={() => {
+          setAgeBucketModalVisible(false);
+          setEditingAgeBucket(undefined);
+        }}
+        onSubmit={handleAgeBucketSubmit}
         loading={loading}
       />
     </div>

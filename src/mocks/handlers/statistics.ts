@@ -43,9 +43,16 @@ export const statisticsHandlers = [
       data: {
         totalRevenue,
         totalOrders,
-        totalCustomers,
+        totalCost: totalRevenue * 0.6,
+        totalGrossProfit: totalRevenue * 0.4,
+        totalCustomers: uniqueCustomers,
+        newCustomers: Math.round(uniqueCustomers * 0.4),
+        returningCustomers: Math.round(uniqueCustomers * 0.6),
         avgOrderValue,
+        avgCostPerOrder: totalOrders > 0 ? (totalRevenue * 0.6) / totalOrders : 0,
         revenueGrowth,
+        costGrowth: revenueGrowth * 0.8,
+        grossProfitGrowth: revenueGrowth * 1.1,
         ordersGrowth,
       },
     });
@@ -75,6 +82,12 @@ export const statisticsHandlers = [
         revenue: dayOrders
           .filter((order) => order.status === 'delivered')
           .reduce((sum, order) => sum + order.finalAmount, 0),
+        cost: dayOrders
+          .filter((order) => order.status === 'delivered')
+          .reduce((sum, order) => sum + order.finalAmount * 0.6, 0),
+        grossProfit: dayOrders
+          .filter((order) => order.status === 'delivered')
+          .reduce((sum, order) => sum + order.finalAmount * 0.4, 0),
         orders: dayOrders.length,
         customers: new Set(dayOrders.map((order) => order.customerPhone)).size,
       });
@@ -96,11 +109,14 @@ export const statisticsHandlers = [
 
       return {
         productId: product.id,
+        productCode: product.sku,
         productName: product.name,
-        sku: product.sku,
         image: product.images[0],
         quantity,
         revenue,
+        cost: revenue * 0.6,
+        grossProfit: revenue * 0.4,
+        grossMargin: 40,
       };
     });
 
@@ -144,8 +160,13 @@ export const statisticsHandlers = [
         categoryId: category.id,
         categoryName: category.name,
         revenue: categoryRevenue,
+        cost: categoryRevenue * 0.6,
         orders: categoryOrders,
-        percentage: 0,
+        quantity: categoryOrders,
+        grossProfit: categoryRevenue * 0.4,
+        grossMargin: 40,
+        revenuePercentage: 0,
+        costPercentage: 0,
       };
     });
 
@@ -154,7 +175,8 @@ export const statisticsHandlers = [
 
     // 计算每个类别的百分比
     categorySales.forEach((item) => {
-      item.percentage = totalRevenue > 0 ? (item.revenue / totalRevenue) * 100 : 0;
+      item.revenuePercentage = totalRevenue > 0 ? (item.revenue / totalRevenue) * 100 : 0;
+      item.costPercentage = totalRevenue > 0 ? (item.cost / (totalRevenue * 0.6 || 1)) * 100 : 0;
     });
 
     return HttpResponse.json({
@@ -243,8 +265,10 @@ export const statisticsHandlers = [
       return {
         region,
         revenue,
+        cost: revenue * 0.6,
         orders,
-        percentage: 0,
+        revenuePercentage: 0,
+        costPercentage: 0,
       };
     });
 
@@ -253,7 +277,8 @@ export const statisticsHandlers = [
 
     // 计算每个区域的百分比
     regionSales.forEach((item) => {
-      item.percentage = totalRevenue > 0 ? (item.revenue / totalRevenue) * 100 : 0;
+      item.revenuePercentage = totalRevenue > 0 ? (item.revenue / totalRevenue) * 100 : 0;
+      item.costPercentage = totalRevenue > 0 ? (item.cost / (totalRevenue * 0.6 || 1)) * 100 : 0;
     });
 
     return HttpResponse.json({

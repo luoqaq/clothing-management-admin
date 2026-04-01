@@ -34,7 +34,7 @@ export const useOrders = () => {
       const result = await dispatch(fetchOrders(params)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      throw err;
     }
   };
 
@@ -44,7 +44,7 @@ export const useOrders = () => {
       const result = await dispatch(fetchOrderById(id)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      throw err;
     }
   };
 
@@ -54,7 +54,7 @@ export const useOrders = () => {
       const result = await dispatch(createOrder(order)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      throw err;
     }
   };
 
@@ -64,7 +64,7 @@ export const useOrders = () => {
       const result = await dispatch(updateOrderStatus({ id, status })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      throw err;
     }
   };
 
@@ -74,7 +74,7 @@ export const useOrders = () => {
       const result = await dispatch(cancelOrder({ id, reason })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      throw err;
     }
   };
 
@@ -84,7 +84,7 @@ export const useOrders = () => {
       const result = await dispatch(refundOrder({ id, data })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      throw err;
     }
   };
 
