@@ -34,7 +34,6 @@ const ProductList: React.FC = () => {
     suppliers,
     loading,
     pagination,
-    filters,
     getProducts,
     getCategories,
     getSuppliers,
@@ -63,17 +62,44 @@ const ProductList: React.FC = () => {
     void Promise.all([getProducts({ page: 1, pageSize: 10 }), getCategories(), getSuppliers()]);
   }, []);
 
+  const buildFilters = (overrides?: {
+    searchText?: string;
+    selectedCategory?: number | undefined;
+    selectedSupplier?: number | undefined;
+    selectedStatus?: ProductStatus | undefined;
+  }): ProductFilters => ({
+    search: (overrides?.searchText ?? searchText) || undefined,
+    categoryId: overrides?.selectedCategory ?? selectedCategory,
+    supplierId: overrides?.selectedSupplier ?? selectedSupplier,
+    status: overrides?.selectedStatus ?? selectedStatus,
+  });
+
   const loadProducts = (params?: { page?: number; pageSize?: number; filters?: ProductFilters }) =>
-    getProducts(params ?? { page: pagination.page, pageSize: pagination.pageSize, filters });
+    getProducts(params ?? { page: pagination.page, pageSize: pagination.pageSize, filters: buildFilters() });
+
+  const handleFilterChange = (nextValues: {
+    selectedCategory?: number | undefined;
+    selectedSupplier?: number | undefined;
+    selectedStatus?: ProductStatus | undefined;
+  }) => {
+    const nextFilters = buildFilters(nextValues);
+    const nextPageSize = pagination.pageSize || 10;
+
+    if (Object.prototype.hasOwnProperty.call(nextValues, 'selectedCategory')) {
+      setSelectedCategory(nextValues.selectedCategory);
+    }
+    if (Object.prototype.hasOwnProperty.call(nextValues, 'selectedSupplier')) {
+      setSelectedSupplier(nextValues.selectedSupplier);
+    }
+    if (Object.prototype.hasOwnProperty.call(nextValues, 'selectedStatus')) {
+      setSelectedStatus(nextValues.selectedStatus);
+    }
+
+    void loadProducts({ page: 1, pageSize: nextPageSize, filters: nextFilters });
+  };
 
   const handleSearch = () => {
-    const nextFilters: ProductFilters = {
-      search: searchText || undefined,
-      categoryId: selectedCategory,
-      supplierId: selectedSupplier,
-      status: selectedStatus,
-    };
-    void loadProducts({ page: 1, pageSize: 10, filters: nextFilters });
+    void loadProducts({ page: 1, pageSize: pagination.pageSize || 10, filters: buildFilters() });
   };
 
   const handleReset = () => {
@@ -81,7 +107,7 @@ const ProductList: React.FC = () => {
     setSelectedCategory(undefined);
     setSelectedSupplier(undefined);
     setSelectedStatus(undefined);
-    void loadProducts({ page: 1, pageSize: 10, filters: {} });
+    void loadProducts({ page: 1, pageSize: pagination.pageSize || 10, filters: {} });
   };
 
   const handleDelete = async (id: number) => {
@@ -327,7 +353,7 @@ const ProductList: React.FC = () => {
             className="filter-toolbar__select"
             value={selectedCategory}
             options={categories.map((item) => ({ label: item.name, value: item.id }))}
-            onChange={setSelectedCategory}
+            onChange={(value) => handleFilterChange({ selectedCategory: value })}
           />
           <Select
             allowClear
@@ -335,7 +361,7 @@ const ProductList: React.FC = () => {
             className="filter-toolbar__select"
             value={selectedSupplier}
             options={suppliers.map((item) => ({ label: item.name, value: item.id }))}
-            onChange={setSelectedSupplier}
+            onChange={(value) => handleFilterChange({ selectedSupplier: value })}
           />
           <Select
             allowClear
@@ -347,7 +373,7 @@ const ProductList: React.FC = () => {
               { label: '上架中', value: 'active' },
               { label: '已下架', value: 'inactive' },
             ]}
-            onChange={setSelectedStatus}
+            onChange={(value) => handleFilterChange({ selectedStatus: value })}
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
@@ -364,7 +390,7 @@ const ProductList: React.FC = () => {
             current: pagination.page,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            onChange: (page, pageSize) => void loadProducts({ page, pageSize, filters }),
+            onChange: (page, pageSize) => void loadProducts({ page, pageSize, filters: buildFilters() }),
           }}
         />
       </Card>

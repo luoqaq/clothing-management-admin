@@ -293,7 +293,6 @@ const ProductImportPage: React.FC = () => {
       setProcessingText('正在调用 AI 分析 Excel 中的商品信息...');
       const result = await parseExcelImport(payload);
       if (!result) {
-        message.error('Excel 解析失败');
         return false;
       }
 
@@ -319,7 +318,6 @@ const ProductImportPage: React.FC = () => {
       setProcessingText('正在上传截图并调用 AI 识别...');
       const result = await parseImageImport(file);
       if (!result) {
-        message.error('截图识别失败');
         return false;
       }
 
@@ -370,7 +368,6 @@ const ProductImportPage: React.FC = () => {
       setProcessingText('正在批量创建商品，请不要关闭页面...');
       const result = await bulkCreateProducts(drafts, createMissingSuppliers);
       if (!result) {
-        message.error('批量导入失败');
         return;
       }
 

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { productsApi } from '../../api/products';
 import type { RootState } from '../../store';
+import { getErrorMessage } from '../../utils/error';
 import type {
   ProductState,
   Product,
@@ -40,7 +41,7 @@ export const fetchProducts = createAsyncThunk(
 
       return rejectWithValue(response.message || '获取商品列表失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '获取商品列表失败'));
     }
   }
 );
@@ -58,7 +59,7 @@ export const fetchProductById = createAsyncThunk(
 
       return rejectWithValue(response.message || '获取商品详情失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '获取商品详情失败'));
     }
   }
 );
@@ -76,7 +77,7 @@ export const createProduct = createAsyncThunk(
 
       return rejectWithValue(response.message || '创建商品失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '创建商品失败'));
     }
   }
 );
@@ -97,7 +98,7 @@ export const updateProduct = createAsyncThunk(
 
       return rejectWithValue(response.message || '更新商品失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '更新商品失败'));
     }
   }
 );
@@ -115,7 +116,7 @@ export const deleteProduct = createAsyncThunk(
 
       return rejectWithValue(response.message || '删除商品失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '删除商品失败'));
     }
   }
 );
@@ -133,7 +134,7 @@ export const fetchCategories = createAsyncThunk(
 
       return rejectWithValue(response.message || '获取分类列表失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '获取分类列表失败'));
     }
   }
 );
@@ -151,7 +152,7 @@ export const fetchSuppliers = createAsyncThunk(
 
       return rejectWithValue(response.message || '获取供应商列表失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '获取供应商列表失败'));
     }
   }
 );
@@ -169,7 +170,7 @@ export const updateProductStock = createAsyncThunk(
 
       return rejectWithValue(response.message || '更新库存失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '更新库存失败'));
     }
   }
 );
@@ -186,7 +187,7 @@ export const parseExcelImport = createAsyncThunk(
 
       return rejectWithValue(response.message || '解析 Excel 失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '解析 Excel 失败'));
     }
   }
 );
@@ -203,7 +204,7 @@ export const parseImageImport = createAsyncThunk(
 
       return rejectWithValue(response.message || '解析截图失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '解析截图失败'));
     }
   }
 );
@@ -223,7 +224,7 @@ export const bulkCreateProducts = createAsyncThunk(
 
       return rejectWithValue(response.message || '批量导入失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '批量导入失败'));
     }
   }
 );
@@ -241,7 +242,7 @@ export const createCategory = createAsyncThunk(
 
       return rejectWithValue(response.message || '创建分类失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '创建分类失败'));
     }
   }
 );
@@ -262,7 +263,7 @@ export const updateCategory = createAsyncThunk(
 
       return rejectWithValue(response.message || '更新分类失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '更新分类失败'));
     }
   }
 );
@@ -280,7 +281,7 @@ export const deleteCategory = createAsyncThunk(
 
       return rejectWithValue(response.message || '删除分类失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '删除分类失败'));
     }
   }
 );
@@ -298,7 +299,7 @@ export const createSupplier = createAsyncThunk(
 
       return rejectWithValue(response.message || '创建供应商失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '创建供应商失败'));
     }
   }
 );
@@ -319,7 +320,7 @@ export const updateSupplier = createAsyncThunk(
 
       return rejectWithValue(response.message || '更新供应商失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '更新供应商失败'));
     }
   }
 );
@@ -337,7 +338,7 @@ export const deleteSupplier = createAsyncThunk(
 
       return rejectWithValue(response.message || '删除供应商失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '删除供应商失败'));
     }
   }
 );
@@ -395,6 +396,7 @@ const productSlice = createSlice({
           pageSize: action.payload.pageSize,
           total: action.payload.total,
         };
+        state.filters = action.meta.arg?.filters ?? {};
         state.error = null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {

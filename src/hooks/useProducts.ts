@@ -1,5 +1,7 @@
 import { useSelector, useDispatch } from 'react-redux';
+import { message } from 'antd';
 import type { RootState, AppDispatch } from '../store';
+import { getErrorMessage } from '../utils/error';
 import {
   fetchProducts,
   fetchProductById,
@@ -50,13 +52,18 @@ export const useProducts = () => {
   const pagination = useSelector(selectProductPagination);
   const filters = useSelector(selectProductFilters);
 
+  const handleActionError = (err: unknown, fallback: string) => {
+    message.error(getErrorMessage(err, fallback));
+    return null;
+  };
+
   // 获取商品列表
   const getProducts = async (params?: { page?: number; pageSize?: number; filters?: ProductFilters }) => {
     try {
       const result = await dispatch(fetchProducts(params)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '获取商品列表失败');
     }
   };
 
@@ -66,7 +73,7 @@ export const useProducts = () => {
       const result = await dispatch(fetchProductById(id)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '获取商品详情失败');
     }
   };
 
@@ -76,7 +83,7 @@ export const useProducts = () => {
       const result = await dispatch(createProduct(product)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '创建商品失败');
     }
   };
 
@@ -86,7 +93,7 @@ export const useProducts = () => {
       const result = await dispatch(updateProduct({ id, data: product })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '更新商品失败');
     }
   };
 
@@ -96,7 +103,7 @@ export const useProducts = () => {
       const result = await dispatch(deleteProduct(id)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '删除商品失败');
     }
   };
 
@@ -106,7 +113,7 @@ export const useProducts = () => {
       const result = await dispatch(fetchCategories()).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '获取分类列表失败');
     }
   };
 
@@ -115,7 +122,7 @@ export const useProducts = () => {
       const result = await dispatch(fetchSuppliers()).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '获取供应商列表失败');
     }
   };
 
@@ -125,7 +132,7 @@ export const useProducts = () => {
       const result = await dispatch(createCategory(category)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '创建分类失败');
     }
   };
 
@@ -135,7 +142,7 @@ export const useProducts = () => {
       const result = await dispatch(updateCategoryAction({ id, data: category })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '更新分类失败');
     }
   };
 
@@ -145,7 +152,7 @@ export const useProducts = () => {
       const result = await dispatch(deleteCategoryAction(id)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '删除分类失败');
     }
   };
 
@@ -154,7 +161,7 @@ export const useProducts = () => {
       const result = await dispatch(createSupplier(supplier)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '创建供应商失败');
     }
   };
 
@@ -163,7 +170,7 @@ export const useProducts = () => {
       const result = await dispatch(updateSupplierAction({ id, data: supplier })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '更新供应商失败');
     }
   };
 
@@ -172,7 +179,7 @@ export const useProducts = () => {
       const result = await dispatch(deleteSupplierAction(id)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '删除供应商失败');
     }
   };
 
@@ -182,7 +189,7 @@ export const useProducts = () => {
       const result = await dispatch(updateProductStock({ id, stock })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '更新库存失败');
     }
   };
 
@@ -191,7 +198,7 @@ export const useProducts = () => {
       const result = await dispatch(parseExcelImportAction(payload)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '解析 Excel 失败');
     }
   };
 
@@ -200,7 +207,7 @@ export const useProducts = () => {
       const result = await dispatch(parseImageImportAction(file)).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '解析截图失败');
     }
   };
 
@@ -209,7 +216,7 @@ export const useProducts = () => {
       const result = await dispatch(bulkCreateProductsAction({ products, createMissingSuppliers })).unwrap();
       return result;
     } catch (err) {
-      return null;
+      return handleActionError(err, '批量导入失败');
     }
   };
 
