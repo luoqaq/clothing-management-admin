@@ -3,21 +3,22 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Spin, Card } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
+import { isAdminUser } from '../../utils/role';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, getCurrentUser, loading } = useAuth();
+  const { isAuthenticated, getCurrentUser, loading, user } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
     // 如果有 token 但用户信息未加载，获取用户信息
-    if (!isAuthenticated && localStorage.getItem('auth_token')) {
-      getCurrentUser();
+    if (localStorage.getItem('auth_token') && !user) {
+      void getCurrentUser();
     }
-  }, []);
+  }, [getCurrentUser, user]);
 
   // 加载中
   if (loading) {
@@ -41,6 +42,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // 未登录，重定向到登录页
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user && !isAdminUser(user) && (
+    location.pathname.startsWith('/dashboard') ||
+    location.pathname.startsWith('/statistics') ||
+    location.pathname.startsWith('/configuration') ||
+    location.pathname.startsWith('/products/import') ||
+    location.pathname.startsWith('/products/create') ||
+    location.pathname.startsWith('/products/edit')
+  )) {
+    return <Navigate to="/products" replace />;
   }
 
   return <>{children}</>;

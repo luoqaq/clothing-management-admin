@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  role: 'admin' | 'manager' | 'staff';
+  role: 'admin' | 'sales' | 'manager' | 'staff';
 }
 
 export interface LoginCredentials {
@@ -43,7 +43,7 @@ export interface ProductSpecification {
   color: string;
   size: string;
   salePrice: number;
-  costPrice: number;
+  costPrice?: number;
   stock: number;
   reservedStock: number;
   availableStock: number;
@@ -74,6 +74,14 @@ export interface Product {
   maxPrice: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SalesUser {
+  id: number;
+  username: string;
+  name: string;
+  role: 'admin' | 'sales';
+  createdAt: string;
 }
 
 export type ImportSourceType = 'excel' | 'image';

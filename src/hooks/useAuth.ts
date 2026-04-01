@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../store';
 import { login, logout, getCurrentUser, clearError, selectCurrentUser, selectIsAuthenticated, selectAuthLoading, selectAuthError } from '../features/auth/authSlice';
@@ -11,34 +12,34 @@ export const useAuth = () => {
   const error = useSelector(selectAuthError);
 
   // 登录
-  const handleLogin = async (credentials: LoginCredentials) => {
+  const handleLogin = useCallback(async (credentials: LoginCredentials) => {
     try {
       const result = await dispatch(login(credentials)).unwrap();
       return result;
     } catch (err) {
       return null;
     }
-  };
+  }, [dispatch]);
 
   // 登出
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logout());
-  };
+  }, [dispatch]);
 
   // 获取当前用户信息
-  const handleGetCurrentUser = async () => {
+  const handleGetCurrentUser = useCallback(async () => {
     try {
       const result = await dispatch(getCurrentUser()).unwrap();
       return result;
     } catch (err) {
       return null;
     }
-  };
+  }, [dispatch]);
 
   // 清除错误
-  const handleClearError = () => {
+  const handleClearError = useCallback(() => {
     dispatch(clearError());
-  };
+  }, [dispatch]);
 
   return {
     user,

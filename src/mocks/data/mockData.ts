@@ -4,10 +4,10 @@ import dayjs from 'dayjs';
 // 用户数据
 export const mockUser: User = {
   id: 1,
-  username: 'admin',
+  username: 'chuchu',
   name: '管理员',
-  email: 'admin@clothing.com',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+  email: 'chuchu@clothing.com',
+  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=chuchu',
   role: 'admin',
 };
 

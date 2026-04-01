@@ -20,6 +20,8 @@ import {
 } from 'antd';
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { useProducts } from '../../hooks/useProducts';
+import { useAuth } from '../../hooks/useAuth';
+import { isAdminUser } from '../../utils/role';
 import ProductForm from './ProductForm';
 import type { Product, ProductFilters, ProductStatus, ProductSpecification } from '../../types';
 
@@ -28,6 +30,8 @@ const { Title, Text } = Typography;
 const ProductList: React.FC = () => {
   const screens = Grid.useBreakpoint();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = isAdminUser(user);
   const {
     products,
     categories,
@@ -59,7 +63,11 @@ const ProductList: React.FC = () => {
   const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
   useEffect(() => {
-    void Promise.all([getProducts({ page: 1, pageSize: 10 }), getCategories(), getSuppliers()]);
+    void Promise.all([
+      getProducts({ page: 1, pageSize: 10 }),
+      getCategories(),
+      isAdmin ? getSuppliers() : Promise.resolve([]),
+    ]);
   }, []);
 
   const buildFilters = (overrides?: {
@@ -70,7 +78,7 @@ const ProductList: React.FC = () => {
   }): ProductFilters => ({
     search: (overrides?.searchText ?? searchText) || undefined,
     categoryId: overrides?.selectedCategory ?? selectedCategory,
-    supplierId: overrides?.selectedSupplier ?? selectedSupplier,
+    supplierId: isAdmin ? overrides?.selectedSupplier ?? selectedSupplier : undefined,
     status: overrides?.selectedStatus ?? selectedStatus,
   });
 
@@ -88,7 +96,7 @@ const ProductList: React.FC = () => {
     if (Object.prototype.hasOwnProperty.call(nextValues, 'selectedCategory')) {
       setSelectedCategory(nextValues.selectedCategory);
     }
-    if (Object.prototype.hasOwnProperty.call(nextValues, 'selectedSupplier')) {
+    if (isAdmin && Object.prototype.hasOwnProperty.call(nextValues, 'selectedSupplier')) {
       setSelectedSupplier(nextValues.selectedSupplier);
     }
     if (Object.prototype.hasOwnProperty.call(nextValues, 'selectedStatus')) {
@@ -215,7 +223,7 @@ const ProductList: React.FC = () => {
       render: (_: unknown, record: Product) => (
         <div>
           <div style={{ fontWeight: 600 }}>{record.name}</div>
-          <div style={{ color: '#8c8c8c' }}>{record.supplier?.name || '未设置供应商'}</div>
+          {isAdmin ? <div style={{ color: '#8c8c8c' }}>{record.supplier?.name || '未设置供应商'}</div> : null}
         </div>
       ),
     },
@@ -308,14 +316,18 @@ const ProductList: React.FC = () => {
           <Button type="text" icon={<EyeOutlined />} onClick={() => { setSelectedProduct(record); setViewModalVisible(true); }}>
             查看
           </Button>
-          <Button type="text" icon={<EditOutlined />} onClick={() => { setSelectedProduct(record); setEditModalVisible(true); }}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除这款商品吗？" onConfirm={() => handleDelete(record.id)}>
-            <Button type="text" danger icon={<DeleteOutlined />}>
-              删除
+          {isAdmin ? (
+            <Button type="text" icon={<EditOutlined />} onClick={() => { setSelectedProduct(record); setEditModalVisible(true); }}>
+              编辑
             </Button>
-          </Popconfirm>
+          ) : null}
+          {isAdmin ? (
+            <Popconfirm title="确定删除这款商品吗？" onConfirm={() => handleDelete(record.id)}>
+              <Button type="text" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          ) : null}
         </div>
       ),
     },
@@ -332,10 +344,12 @@ const ProductList: React.FC = () => {
             </Title>
           </div>
           <Space wrap>
-            <Button onClick={() => navigate('/products/import')}>批量导入</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
-              新建商品
-            </Button>
+            {isAdmin ? <Button onClick={() => navigate('/products/import')}>批量导入</Button> : null}
+            {isAdmin ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
+                新建商品
+              </Button>
+            ) : null}
           </Space>
         </div>
 
@@ -355,14 +369,16 @@ const ProductList: React.FC = () => {
             options={categories.map((item) => ({ label: item.name, value: item.id }))}
             onChange={(value) => handleFilterChange({ selectedCategory: value })}
           />
-          <Select
-            allowClear
-            placeholder="供应商"
-            className="filter-toolbar__select"
-            value={selectedSupplier}
-            options={suppliers.map((item) => ({ label: item.name, value: item.id }))}
-            onChange={(value) => handleFilterChange({ selectedSupplier: value })}
-          />
+          {isAdmin ? (
+            <Select
+              allowClear
+              placeholder="供应商"
+              className="filter-toolbar__select"
+              value={selectedSupplier}
+              options={suppliers.map((item) => ({ label: item.name, value: item.id }))}
+              onChange={(value) => handleFilterChange({ selectedSupplier: value })}
+            />
+          ) : null}
           <Select
             allowClear
             placeholder="状态"
@@ -423,7 +439,7 @@ const ProductList: React.FC = () => {
                   {selectedProduct.status === 'active' ? '上架中' : selectedProduct.status === 'inactive' ? '已下架' : '草稿'}
                 </Descriptions.Item>
                 <Descriptions.Item label="分类">{selectedProduct.category?.name || '-'}</Descriptions.Item>
-                <Descriptions.Item label="供应商">{selectedProduct.supplier?.name || '-'}</Descriptions.Item>
+                {isAdmin ? <Descriptions.Item label="供应商">{selectedProduct.supplier?.name || '-'}</Descriptions.Item> : null}
                 <Descriptions.Item label="规格数">{selectedProduct.specCount}</Descriptions.Item>
                 <Descriptions.Item label="总库存">{selectedProduct.totalStock}</Descriptions.Item>
                 <Descriptions.Item label="售价范围">{`¥${selectedProduct.minPrice.toFixed(2)} - ¥${selectedProduct.maxPrice.toFixed(2)}`}</Descriptions.Item>
@@ -442,7 +458,7 @@ const ProductList: React.FC = () => {
                 { title: '规格', key: 'specification', minWidth: 140, render: (_, item: ProductSpecification) => `${item.color} / ${item.size}` },
                 { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode', minWidth: 150 },
                 { title: '售价', dataIndex: 'salePrice', key: 'salePrice', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
-                { title: '成本价', dataIndex: 'costPrice', key: 'costPrice', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
+                ...(isAdmin ? [{ title: '成本价', dataIndex: 'costPrice', key: 'costPrice', minWidth: 100, render: (value?: number) => `¥${Number(value || 0).toFixed(2)}` }] : []),
                 { title: '库存', dataIndex: 'stock', key: 'stock', minWidth: 90 },
                 { title: '占用', dataIndex: 'reservedStock', key: 'reservedStock', minWidth: 90 },
                 { title: '可售', dataIndex: 'availableStock', key: 'availableStock', minWidth: 90 },
@@ -451,9 +467,11 @@ const ProductList: React.FC = () => {
                   key: 'actions',
                   minWidth: 120,
                   render: (_, specification: ProductSpecification) => (
-                    <Button type="link" onClick={() => handleEditStock(selectedProduct, specification)}>
-                      调整库存
-                    </Button>
+                    isAdmin ? (
+                      <Button type="link" onClick={() => handleEditStock(selectedProduct, specification)}>
+                        调整库存
+                      </Button>
+                    ) : null
                   ),
                 },
               ]}
@@ -481,11 +499,11 @@ const ProductList: React.FC = () => {
         )}
       </Modal>
 
-      <Modal open={addModalVisible} title="新建商品" footer={null} onCancel={() => setAddModalVisible(false)} width={formModalWidth} destroyOnHidden>
+      <Modal open={isAdmin && addModalVisible} title="新建商品" footer={null} onCancel={() => setAddModalVisible(false)} width={formModalWidth} destroyOnHidden>
         <ProductForm categories={categories} suppliers={suppliers} onSubmit={handleAddSubmit} onCancel={() => setAddModalVisible(false)} loading={saveLoading} />
       </Modal>
 
-      <Modal open={editModalVisible} title="编辑商品" footer={null} onCancel={() => setEditModalVisible(false)} width={formModalWidth} destroyOnHidden>
+      <Modal open={isAdmin && editModalVisible} title="编辑商品" footer={null} onCancel={() => setEditModalVisible(false)} width={formModalWidth} destroyOnHidden>
         {selectedProduct && (
           <ProductForm
             categories={categories}
@@ -498,7 +516,7 @@ const ProductList: React.FC = () => {
         )}
       </Modal>
 
-      <Modal open={stockModalVisible} title="调整规格库存" onOk={() => void handleStockSubmit()} onCancel={() => setStockModalVisible(false)}>
+      <Modal open={isAdmin && stockModalVisible} title="调整规格库存" onOk={() => void handleStockSubmit()} onCancel={() => setStockModalVisible(false)}>
         <Form form={stockForm} layout="vertical">
           <Form.Item label="规格">
             <Input value={selectedSpecification ? `${selectedSpecification.color} / ${selectedSpecification.size}` : ''} disabled />

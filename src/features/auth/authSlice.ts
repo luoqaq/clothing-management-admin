@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authApi } from '../../api/auth';
 import type { RootState } from '../../store';
 import type { AuthState, LoginCredentials, User } from '../../types';
+import { getErrorMessage } from '../../utils/error';
 
 // 初始状态
 const initialState: AuthState = {
@@ -28,7 +29,7 @@ export const login = createAsyncThunk(
 
       return rejectWithValue(response.message || '登录失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '网络错误，请稍后重试'));
     }
   }
 );
@@ -55,7 +56,7 @@ export const getCurrentUser = createAsyncThunk(
       }
       return rejectWithValue(response.message || '获取用户信息失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '网络错误，请稍后重试'));
     }
   }
 );
@@ -74,7 +75,7 @@ export const changePassword = createAsyncThunk(
       }
       return rejectWithValue(response.message || '密码修改失败');
     } catch (error) {
-      return rejectWithValue('网络错误，请稍后重试');
+      return rejectWithValue(getErrorMessage(error, '网络错误，请稍后重试'));
     }
   }
 );

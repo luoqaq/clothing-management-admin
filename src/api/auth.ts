@@ -1,5 +1,5 @@
 import { api } from './index';
-import type { User, LoginCredentials } from '../types';
+import type { User, LoginCredentials, SalesUser } from '../types';
 
 export interface LoginResponse {
   user: User;
@@ -25,5 +25,17 @@ export const authApi = {
   // 修改密码
   changePassword: async (data: { oldPassword: string; newPassword: string }) => {
     return api.post('/auth/change-password', data);
+  },
+
+  getSalesUsers: async () => {
+    return api.get<SalesUser[]>('/auth/users');
+  },
+
+  createSalesUser: async (data: { username: string; password: string; name?: string }) => {
+    return api.post<SalesUser>('/auth/users', data);
+  },
+
+  updateSalesUser: async (id: number, data: { username?: string; password?: string; name?: string }) => {
+    return api.put<SalesUser>(`/auth/users/${id}`, data);
   },
 };

@@ -9,6 +9,8 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { MenuProps } from 'antd';
+import { useAuth } from '../../hooks/useAuth';
+import { isAdminUser } from '../../utils/role';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -19,7 +21,7 @@ const BRAND_NOTE = 'Curated showroom admin';
 type MenuItem = Required<MenuProps>['items'][number];
 
 // 菜单配置
-const menuItems: MenuItem[] = [
+const adminMenuItems: MenuItem[] = [
   {
     key: '/dashboard',
     icon: <DashboardOutlined />,
@@ -47,6 +49,10 @@ const menuItems: MenuItem[] = [
   },
 ];
 
+const salesMenuItems: MenuItem[] = adminMenuItems.filter((item) =>
+  ['/products', '/orders'].includes(String(item?.key))
+);
+
 interface SidebarProps {
   collapsed: boolean;
   compact?: boolean;
@@ -56,8 +62,10 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, compact = false, onNavigate }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [selectedKeys, setSelectedKeys] = useState([location.pathname]);
   const isCollapsedView = !compact && collapsed;
+  const menuItems = isAdminUser(user) ? adminMenuItems : salesMenuItems;
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     const path = String(key);

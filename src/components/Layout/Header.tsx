@@ -5,6 +5,7 @@ import type { MenuProps } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import dayjs from 'dayjs';
+import { formatRoleLabel, isAdminUser } from '../../utils/role';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -48,12 +49,19 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, on
   const [currentTime, setCurrentTime] = useState<string>(
     dayjs().format('YYYY年MM月DD日 HH:mm:ss')
   );
+  const isAdmin = isAdminUser(user);
   const pageMeta = Object.entries(PAGE_META).find(([path]) =>
     location.pathname.startsWith(path)
   )?.[1] ?? {
     title: 'chuchu的橱窗',
     subtitle: '保持界面克制，把注意力留给关键决策。',
   };
+  const resolvedPageMeta = !isAdmin && location.pathname.startsWith('/configuration')
+    ? {
+        title: '账号信息',
+        subtitle: '查看当前账号状态与工作区信息。',
+      }
+    : pageMeta;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -151,8 +159,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, on
         <div className="app-header__title-group">
           <Text className="app-header__eyebrow">{BRAND_NAME}</Text>
           <div className="app-header__title-row">
-            <Text className="app-header__title">{pageMeta.title}</Text>
-            {(!collapsed || compact) && <Text className="app-header__subtitle">{pageMeta.subtitle}</Text>}
+            <Text className="app-header__title">{resolvedPageMeta.title}</Text>
+            {(!collapsed || compact) && <Text className="app-header__subtitle">{resolvedPageMeta.subtitle}</Text>}
           </div>
         </div>
       </div>
@@ -186,8 +194,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, on
               className="app-header__avatar"
             />
             <div className="app-header__profile-copy">
-              {(!collapsed || compact) && <Text className="app-header__profile-name">{user?.name}</Text>}
-              {(!collapsed || compact) && <Text className="app-header__profile-role">{user?.role}</Text>}
+              {(!collapsed || compact) && <Text className="app-header__profile-name">{user?.username}</Text>}
+              {(!collapsed || compact) && <Text className="app-header__profile-role">{formatRoleLabel(user?.role)}</Text>}
             </div>
           </Space>
         </Dropdown>

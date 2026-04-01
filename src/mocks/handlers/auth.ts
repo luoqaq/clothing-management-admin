@@ -7,8 +7,8 @@ export const authHandlers = [
   http.post('/api/auth/login', async ({ request }) => {
     const credentials: LoginCredentials = await request.json();
 
-    // 简单的验证：用户名 admin，密码 password
-    if (credentials.username === 'admin' && credentials.password === 'password') {
+    // 简单的验证：用户名 chuchu，密码 chuchu0510
+    if (credentials.username === 'chuchu' && credentials.password === 'chuchu0510') {
       return HttpResponse.json({
         success: true,
         data: {
@@ -20,7 +20,7 @@ export const authHandlers = [
 
     return HttpResponse.json({
       success: false,
-      message: '用户名或密码错误',
+      message: '输入的用户名或密码有误，请检查后重试',
     });
   }),
 
