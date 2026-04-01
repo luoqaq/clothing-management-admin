@@ -93,17 +93,10 @@ function validateDrafts(
   suppliers: Supplier[]
 ): ImportIssue[] {
   const issues: ImportIssue[] = [];
-  const productCodeMap = new Map<string, string[]>();
-  const skuCodeMap = new Map<string, Array<{ rowKey: string; specRowKey: string }>>();
   const categoryIds = new Set(categories.map((item) => Number(item.id)));
   const supplierIds = new Set(suppliers.map((item) => Number(item.id)));
 
   drafts.forEach((draft) => {
-    const normalizedCode = normalizeLookup(draft.productCode);
-    if (normalizedCode) {
-      productCodeMap.set(normalizedCode, [...(productCodeMap.get(normalizedCode) ?? []), draft.rowKey]);
-    }
-
     if (!draft.productCode.trim()) {
       issues.push({ level: 'error', rowKey: draft.rowKey, field: 'productCode', message: '款号不能为空' });
     }
@@ -151,11 +144,6 @@ function validateDrafts(
       if (specKey !== '-') {
         specDedupeMap.set(specKey, [...(specDedupeMap.get(specKey) ?? []), spec.rowKey]);
       }
-
-      const skuCode = buildSkuCode(draft.productCode, spec.size, spec.color);
-      if (skuCode) {
-        skuCodeMap.set(skuCode, [...(skuCodeMap.get(skuCode) ?? []), { rowKey: draft.rowKey, specRowKey: spec.rowKey }]);
-      }
     });
 
     for (const [, specRowKeys] of specDedupeMap.entries()) {
@@ -166,22 +154,6 @@ function validateDrafts(
       }
     }
   });
-
-  for (const [, rowKeys] of productCodeMap.entries()) {
-    if (rowKeys.length > 1) {
-      rowKeys.forEach((rowKey) => {
-        issues.push({ level: 'error', rowKey, field: 'productCode', message: '同一批导入中款号不能重复' });
-      });
-    }
-  }
-
-  for (const [, entries] of skuCodeMap.entries()) {
-    if (entries.length > 1) {
-      entries.forEach((entry) => {
-        issues.push({ level: 'error', rowKey: entry.rowKey, specRowKey: entry.specRowKey, field: 'skuCode', message: '同一批导入中规格编码不能重复' });
-      });
-    }
-  }
 
   return issues;
 }

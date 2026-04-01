@@ -303,7 +303,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                               return (
                                 <Input
                                   value={buildSkuCode(productCode, specification.size, specification.color)}
-                                  placeholder="保存后自动按 款号-尺码-颜色 生成"
+                                  placeholder="保存后自动生成最终规格编码"
                                   disabled
                                 />
                               );
