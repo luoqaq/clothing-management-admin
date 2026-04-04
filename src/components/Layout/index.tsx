@@ -11,6 +11,7 @@ const { useBreakpoint } = Grid;
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(96);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const { isAuthenticated } = useAuth();
   const screens = useBreakpoint();
   const isCompact = screens.lg === false;
@@ -49,6 +50,8 @@ const MainLayout: React.FC = () => {
         <HeaderComponent
           collapsed={collapsed}
           compact={isCompact}
+          headerCollapsed={headerCollapsed}
+          onHeaderToggle={() => setHeaderCollapsed((value) => !value)}
           onToggle={toggleSidebar}
           onHeightChange={(height) => setHeaderHeight(Math.ceil(height))}
         />

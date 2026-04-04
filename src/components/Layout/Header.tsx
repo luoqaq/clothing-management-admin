@@ -1,6 +1,15 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Layout, Typography, Avatar, Dropdown, Space, Button, Badge } from 'antd';
-import { MenuUnfoldOutlined, MenuFoldOutlined, BellOutlined, UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
+import {
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
+  BellOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  UpOutlined,
+  DownOutlined,
+} from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,11 +46,20 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
 interface HeaderProps {
   collapsed: boolean;
   compact?: boolean;
+  headerCollapsed?: boolean;
+  onHeaderToggle: () => void;
   onToggle: () => void;
   onHeightChange?: (height: number) => void;
 }
 
-const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, onToggle, onHeightChange }) => {
+const HeaderComponent: React.FC<HeaderProps> = ({
+  collapsed,
+  compact = false,
+  headerCollapsed = false,
+  onHeaderToggle,
+  onToggle,
+  onHeightChange,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -92,7 +110,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, on
       observer.disconnect();
       window.removeEventListener('resize', updateHeight);
     };
-  }, [collapsed, location.pathname, onHeightChange]);
+  }, [collapsed, headerCollapsed, location.pathname, onHeightChange]);
 
   // 用户菜单
   const userMenuItems: MenuProps['items'] = [
@@ -143,9 +161,31 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, on
     },
   ];
 
+  if (headerCollapsed) {
+    return (
+      <div
+        ref={(node) => {
+          headerRef.current = node;
+        }}
+        className="app-header-trigger"
+        style={{ left: compact ? 20 : collapsed ? 92 : 296 }}
+      >
+        <Button
+          type="text"
+          icon={<DownOutlined />}
+          onClick={onHeaderToggle}
+          className="app-header-trigger__button"
+          aria-label="展开顶部栏"
+        />
+      </div>
+    );
+  }
+
   return (
     <Header
-      ref={headerRef}
+      ref={(node) => {
+        headerRef.current = node;
+      }}
       className="app-header"
       style={{ left: compact ? 20 : collapsed ? 92 : 296 }}
     >
@@ -155,6 +195,13 @@ const HeaderComponent: React.FC<HeaderProps> = ({ collapsed, compact = false, on
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           onClick={onToggle}
           className="app-header__toggle"
+        />
+        <Button
+          type="text"
+          icon={<UpOutlined />}
+          onClick={onHeaderToggle}
+          className="app-header__toggle"
+          aria-label="收起顶部栏"
         />
         <div className="app-header__title-group">
           <Text className="app-header__eyebrow">{BRAND_NAME}</Text>

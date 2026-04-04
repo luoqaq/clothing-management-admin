@@ -503,6 +503,33 @@ img {
   gap: 16px;
 }
 
+.app-header-trigger {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.app-header-trigger__button.ant-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(18px);
+  color: var(--accent-blue-deep);
+  pointer-events: auto;
+}
+
+.app-header-trigger__button.ant-btn:hover {
+  color: var(--accent-blue-deep);
+  background: rgba(252, 248, 241, 0.96);
+}
+
 .app-header__title-group {
   display: flex;
   flex-direction: column;
@@ -1783,6 +1810,11 @@ img {
     display: none;
   }
 
+  .app-header-trigger {
+    top: 12px;
+    right: 12px;
+  }
+
   .dashboard-hero__title.ant-typography,
   .login-page__title.ant-typography,
   .page-hero__title.ant-typography {
@@ -1804,6 +1836,11 @@ img {
     left: 12px !important;
     right: 12px;
     gap: 14px;
+  }
+
+  .app-header-trigger {
+    left: 12px !important;
+    right: 12px;
   }
 
   .app-header__title.ant-typography {
