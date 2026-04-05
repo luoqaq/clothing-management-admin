@@ -73,7 +73,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       detailImages: product.detailImages,
       tags: product.tags.join(','),
       specifications: product.specifications.map((item) => ({
-        barcode: item.barcode ?? '',
+        id: item.id,
         color: item.color,
         size: item.size,
         salePrice: item.salePrice,
@@ -107,10 +107,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
         : [],
       status: values.status,
       specifications: values.specifications.map((item: any, index: number) => ({
-        id: product?.specifications[index]?.id ?? 0,
+        id: item.id ?? product?.specifications[index]?.id ?? 0,
         productId: product?.id ?? 0,
         skuCode: buildSkuCode(values.productCode, item.size, item.color),
-        barcode: item.barcode ? String(item.barcode).trim() : undefined,
+        barcode: product?.specifications[index]?.barcode ?? null,
         color: item.color,
         size: item.size,
         salePrice: item.salePrice,
@@ -138,7 +138,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     const previousSpec = Array.isArray(specifications) ? specifications[specifications.length - 1] : undefined;
 
     add({
-      barcode: previousSpec?.barcode ?? '',
+      id: 0,
       color: previousSpec?.color ?? '',
       size: previousSpec?.size ?? 'F',
       salePrice: previousSpec?.salePrice,
@@ -284,6 +284,24 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       </Button>
                     </div>
                     <Row gutter={[16, 0]}>
+                      <Col xs={24}>
+                        <Form.Item noStyle shouldUpdate>
+                          {() => {
+                            const specification = form.getFieldValue(['specifications', name]) || {};
+                            const barcode = specification.id
+                              ? product?.specifications.find((item) => item.id === specification.id)?.barcode
+                              : '';
+
+                            return (
+                              <div style={{ marginBottom: 16 }}>
+                                <Text type="secondary">
+                                  标签码：{barcode || '保存后自动生成'}
+                                </Text>
+                              </div>
+                            );
+                          }}
+                        </Form.Item>
+                      </Col>
                       <Col xs={24} md={8}>
                         <Form.Item {...restField} name={[name, 'color']} label="颜色" rules={[{ required: true }]}>
                           <Input placeholder="白色" />

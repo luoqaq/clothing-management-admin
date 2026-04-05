@@ -76,6 +76,19 @@ export interface ProductSpecification {
   updatedAt: string;
 }
 
+export interface ProductLabelItem {
+  skuId: number;
+  productId: number;
+  productCode: string;
+  productName: string;
+  barcode: string;
+  skuCode: string;
+  color: string;
+  size: string;
+  salePrice: number;
+  image?: string | null;
+}
+
 export interface Product {
   id: number;
   productCode: string;

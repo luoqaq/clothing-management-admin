@@ -2,6 +2,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { message } from 'antd';
 import type { RootState, AppDispatch } from '../store';
 import { getErrorMessage } from '../utils/error';
+import { productsApi } from '../api/products';
 import {
   fetchProducts,
   fetchProductById,
@@ -39,6 +40,7 @@ import type {
   Supplier,
   ExcelImportPayload,
   ImportDraftProduct,
+  ProductLabelItem,
 } from '../types';
 
 export const useProducts = () => {
@@ -220,6 +222,15 @@ export const useProducts = () => {
     }
   };
 
+  const getProductLabels = async (id: number): Promise<ProductLabelItem[] | null> => {
+    try {
+      const response = await productsApi.getProductLabels(id);
+      return response.data ?? null;
+    } catch (err) {
+      return handleActionError(err, '获取标签数据失败');
+    }
+  };
+
   // 清除当前商品
   const handleClearCurrentProduct = () => {
     dispatch(clearCurrentProduct());
@@ -255,6 +266,7 @@ export const useProducts = () => {
     parseExcelImport,
     parseImageImport,
     bulkCreateProducts,
+    getProductLabels,
     addCategory,
     updateCategory,
     deleteCategory,

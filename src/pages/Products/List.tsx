@@ -23,7 +23,8 @@ import { useProducts } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminUser } from '../../utils/role';
 import ProductForm from './ProductForm';
-import type { Product, ProductFilters, ProductStatus, ProductSpecification } from '../../types';
+import ProductLabelPrintModal from '../../components/ProductLabelPrintModal';
+import type { Product, ProductFilters, ProductLabelItem, ProductStatus, ProductSpecification } from '../../types';
 
 const { Title, Text } = Typography;
 
@@ -45,6 +46,7 @@ const ProductList: React.FC = () => {
     updateStock,
     addProduct,
     editProduct,
+    getProductLabels,
   } = useProducts();
 
   const [searchText, setSearchText] = useState('');
@@ -57,6 +59,9 @@ const ProductList: React.FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedSpecification, setSelectedSpecification] = useState<ProductSpecification | null>(null);
+  const [labelModalVisible, setLabelModalVisible] = useState(false);
+  const [labelLoading, setLabelLoading] = useState(false);
+  const [productLabels, setProductLabels] = useState<ProductLabelItem[]>([]);
   const [saveLoading, setSaveLoading] = useState(false);
   const [stockForm] = Form.useForm();
   const formModalWidth = screens.lg ? 1100 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
@@ -173,6 +178,19 @@ const ProductList: React.FC = () => {
       }
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleOpenLabelModal = async (product: Product) => {
+    setSelectedProduct(product);
+    setLabelModalVisible(true);
+    setLabelLoading(true);
+
+    try {
+      const labels = await getProductLabels(product.id);
+      setProductLabels(labels ?? []);
+    } finally {
+      setLabelLoading(false);
     }
   };
 
@@ -314,6 +332,11 @@ const ProductList: React.FC = () => {
           {isAdmin ? (
             <Button type="text" icon={<EditOutlined />} onClick={() => { setSelectedProduct(record); setEditModalVisible(true); }}>
               编辑
+            </Button>
+          ) : null}
+          {isAdmin ? (
+            <Button type="text" onClick={() => void handleOpenLabelModal(record)}>
+              打印标签
             </Button>
           ) : null}
           {isAdmin ? (
@@ -473,6 +496,13 @@ const ProductList: React.FC = () => {
               ]}
             />
             <div className="detail-sheet__section">
+              {isAdmin ? (
+                <div style={{ marginBottom: 16 }}>
+                  <Button type="primary" onClick={() => void handleOpenLabelModal(selectedProduct)}>
+                    打印当前商品标签
+                  </Button>
+                </div>
+              ) : null}
               <Text className="detail-sheet__section-title">详情图</Text>
               <div className="detail-sheet__image-grid">
                 {selectedProduct.detailImages.length > 0 ? (
@@ -522,6 +552,16 @@ const ProductList: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <ProductLabelPrintModal
+        open={isAdmin && labelModalVisible}
+        loading={labelLoading}
+        labels={productLabels}
+        onCancel={() => {
+          setLabelModalVisible(false);
+          setProductLabels([]);
+        }}
+      />
     </div>
   );
 };

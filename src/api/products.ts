@@ -9,6 +9,7 @@ import type {
   ImportParseResult,
   ImportDraftProduct,
   BulkImportResult,
+  ProductLabelItem,
 } from '../types';
 import { normalizeProduct } from '../utils/normalize';
 
@@ -43,6 +44,24 @@ export const productsApi = {
       return {
         ...response,
         data: normalizeProduct(response.data),
+      };
+    }
+
+    return response;
+  },
+
+  getProductLabels: async (id: number) => {
+    const response = await api.get<ProductLabelItem[]>(`/products/${id}/labels`);
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: response.data.map((item) => ({
+          ...item,
+          skuId: Number(item.skuId),
+          productId: Number(item.productId),
+          salePrice: Number(item.salePrice ?? 0),
+        })),
       };
     }
 
