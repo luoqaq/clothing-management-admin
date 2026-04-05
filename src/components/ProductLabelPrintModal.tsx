@@ -156,6 +156,55 @@ function createLabelStyles(): Record<string, CSSProperties> {
 
 const styles = createLabelStyles();
 
+async function exportLabelNode(target: HTMLDivElement) {
+  const exportRoot = target.cloneNode(true) as HTMLDivElement;
+  const sourceCanvases = Array.from(target.querySelectorAll('canvas'));
+  const clonedCanvases = Array.from(exportRoot.querySelectorAll('canvas'));
+
+  clonedCanvases.forEach((canvas, index) => {
+    const sourceCanvas = sourceCanvases[index];
+    if (!sourceCanvas) {
+      canvas.remove();
+      return;
+    }
+
+    const image = document.createElement('img');
+    image.src = sourceCanvas.toDataURL('image/png');
+    image.alt = 'qr-code';
+    image.width = sourceCanvas.width;
+    image.height = sourceCanvas.height;
+    image.style.width = canvas.style.width || `${sourceCanvas.width}px`;
+    image.style.height = canvas.style.height || `${sourceCanvas.height}px`;
+    image.style.borderRadius = canvas.style.borderRadius;
+    image.style.border = canvas.style.border;
+    image.style.background = canvas.style.background;
+    image.style.boxSizing = canvas.style.boxSizing;
+    image.style.display = 'block';
+    canvas.replaceWith(image);
+  });
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-10000px';
+  wrapper.style.top = '0';
+  wrapper.style.zIndex = '-1';
+  wrapper.style.pointerEvents = 'none';
+  wrapper.appendChild(exportRoot);
+  document.body.appendChild(wrapper);
+
+  try {
+    return await toPng(exportRoot, {
+      cacheBust: true,
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      width: layout.card.width,
+      height: layout.card.height,
+    });
+  } finally {
+    wrapper.remove();
+  }
+}
+
 interface ProductLabelPrintModalProps {
   open: boolean;
   loading?: boolean;
@@ -251,13 +300,7 @@ export default function ProductLabelPrintModal({
           continue;
         }
 
-        const dataUrl = await toPng(target, {
-          cacheBust: true,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-          width: layout.card.width,
-          height: layout.card.height,
-        });
+        const dataUrl = await exportLabelNode(target);
 
         const link = document.createElement('a');
         link.href = dataUrl;
