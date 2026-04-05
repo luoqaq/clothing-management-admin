@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Button,
   Card,
   Col,
@@ -17,9 +18,10 @@ import {
   Typography,
   message,
 } from 'antd';
-import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons';
-import type { CustomerAgeBucket, Order, Product, ProductSpecification } from '../../types';
+import { DeleteOutlined, MinusOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import type { CustomerAgeBucket, Order, Product, ProductSpecification, ScannedSkuProduct } from '../../types';
 import { customersApi } from '../../api/customers';
+import { productsApi } from '../../api/products';
 import { useProducts } from '../../hooks/useProducts';
 import { getErrorMessage } from '../../utils/error';
 
@@ -56,6 +58,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   const [searchText, setSearchText] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [ageBuckets, setAgeBuckets] = useState<CustomerAgeBucket[]>([]);
+  const [scanCode, setScanCode] = useState('');
+  const [scanLoading, setScanLoading] = useState(false);
+  const [lastScannedItem, setLastScannedItem] = useState<CartItem | null>(null);
 
   useEffect(() => {
     void Promise.all([getProducts({ page: 1, pageSize: 100 }), getCategories()]);
@@ -119,12 +124,32 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   const finalAmount = Math.max(totalAmount - discountAmount, 0);
   const selectorModalWidth = screens.lg ? 980 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
+  const addCartItem = (row: CartItem, quantityDelta = row.quantity) => {
+    let action: 'added' | 'updated' = 'added';
+
+    setCartItems((current) => {
+      const existing = current.find((item) => item.skuId === row.skuId);
+      if (!existing) {
+        return [...current, row];
+      }
+
+      action = 'updated';
+      return current.map((item) =>
+        item.skuId === row.skuId
+          ? {
+              ...item,
+              quantity: Math.min(item.quantity + quantityDelta, item.availableStock),
+            }
+          : item
+      );
+    });
+
+    return action;
+  };
+
   const handleSelectSpecification = (row: CartItem) => {
-    if (cartItems.some((item) => item.skuId === row.skuId)) {
-      message.info('该规格已加入订单');
-      return;
-    }
-    setCartItems((current) => [...current, row]);
+    const action = addCartItem(row);
+    message.success(action === 'added' ? '规格已加入订单' : '已累计该规格数量');
     setSelectorVisible(false);
   };
 
@@ -139,6 +164,46 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
 
   const handleRemove = (skuId: number) => {
     setCartItems((current) => current.filter((item) => item.skuId !== skuId));
+  };
+
+  const buildCartItemFromScanned = (product: ScannedSkuProduct): CartItem => ({
+    productId: product.productId,
+    skuId: product.skuId,
+    productName: product.productName,
+    productCode: product.productCode,
+    skuCode: product.skuCode,
+    image: product.image ?? null,
+    color: product.color,
+    size: product.size,
+    price: product.salePrice,
+    availableStock: product.availableStock,
+    quantity: 1,
+  });
+
+  const handleScanSubmit = async (incomingCode?: string) => {
+    const code = String(incomingCode ?? scanCode).trim();
+    if (!code) {
+      message.warning('请先输入或扫描标签码');
+      return;
+    }
+
+    try {
+      setScanLoading(true);
+      const response = await productsApi.getProductByCode(code);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '未找到对应标签商品');
+      }
+
+      const nextItem = buildCartItemFromScanned(response.data);
+      const action = addCartItem(nextItem);
+      setLastScannedItem(nextItem);
+      setScanCode('');
+      message.success(action === 'added' ? '扫码商品已加入订单' : '已累计该商品数量');
+    } catch (err) {
+      message.error(getErrorMessage(err, '扫码录单失败'));
+    } finally {
+      setScanLoading(false);
+    }
   };
 
   const handleFinish = async (values: any) => {
@@ -198,6 +263,33 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
             选择规格
           </Button>
         </div>
+        <Space direction="vertical" size={12} style={{ width: '100%', marginBottom: 16 }}>
+          <Input.Search
+            value={scanCode}
+            allowClear
+            autoFocus
+            enterButton={
+              <Button type="primary" icon={<SearchOutlined />} loading={scanLoading}>
+                扫码录单
+              </Button>
+            }
+            size="large"
+            placeholder="PAD 可直接用扫码枪输入标签码后回车，例如 SKU0000000012"
+            onChange={(e) => setScanCode(e.target.value)}
+            onSearch={(value) => void handleScanSubmit(value)}
+          />
+          <Text type="secondary">
+            更省事的用法：把光标停在这个输入框里，扫码枪扫完通常会自动回车，系统会直接把对应规格加入当前订单。
+          </Text>
+          {lastScannedItem ? (
+            <Alert
+              type="success"
+              showIcon
+              message={`最近扫码：${lastScannedItem.productName}`}
+              description={`${lastScannedItem.productCode} · ${lastScannedItem.color} / ${lastScannedItem.size} · ${lastScannedItem.skuCode} · 可售库存 ${lastScannedItem.availableStock}`}
+            />
+          ) : null}
+        </Space>
         <Table
           className="content-table"
           rowKey="skuId"

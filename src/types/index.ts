@@ -89,6 +89,24 @@ export interface ProductLabelItem {
   image?: string | null;
 }
 
+export interface ScannedSkuProduct {
+  skuId: number;
+  productId: number;
+  productCode: string;
+  productName: string;
+  barcode: string;
+  skuCode: string;
+  color: string;
+  size: string;
+  salePrice: number;
+  stock: number;
+  reservedStock: number;
+  availableStock: number;
+  status: ProductSpecificationStatus;
+  productStatus: ProductStatus;
+  image?: string | null;
+}
+
 export interface Product {
   id: number;
   productCode: string;

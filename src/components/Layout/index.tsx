@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Grid, Layout } from 'antd';
-import { Outlet } from 'react-router-dom';
+import { Grid, Layout, Button, Tooltip } from 'antd';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { BarcodeOutlined } from '@ant-design/icons';
 import Sidebar from './Sidebar';
 import HeaderComponent from './Header';
 import { useAuth } from '../../hooks/useAuth';
@@ -15,6 +16,11 @@ const MainLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const screens = useBreakpoint();
   const isCompact = screens.lg === false;
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // 判断是否在扫码录单页面
+  const isScanOrderPage = location.pathname === '/orders/scan';
 
   // 如果未认证，不显示布局（路由已处理跳转）
   if (!isAuthenticated) {
@@ -62,6 +68,29 @@ const MainLayout: React.FC = () => {
           <Outlet />
         </Content>
       </Layout>
+      
+      {/* 悬浮扫码录单入口 */}
+      {!isScanOrderPage && (
+        <Tooltip title="扫码录单" placement="right">
+          <Button
+            type="primary"
+            shape="circle"
+            size="large"
+            icon={<BarcodeOutlined style={{ fontSize: 24 }} />}
+            onClick={() => navigate('/orders/scan')}
+            style={{
+              position: 'fixed',
+              left: isCompact ? 24 : collapsed ? 116 : 320,
+              bottom: 24,
+              width: 56,
+              height: 56,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              zIndex: 1000,
+              transition: 'left 0.2s ease',
+            }}
+          />
+        </Tooltip>
+      )}
     </Layout>
   );
 };

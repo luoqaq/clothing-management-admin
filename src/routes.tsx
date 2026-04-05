@@ -10,6 +10,7 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ProductList = React.lazy(() => import('./pages/Products/List'));
 const ProductImportPage = React.lazy(() => import('./pages/Products/Import'));
 const OrderList = React.lazy(() => import('./pages/Orders/List'));
+const ScanOrderPage = React.lazy(() => import('./pages/Orders/ScanOrder'));
 const StatisticsPage = React.lazy(() => import('./pages/Statistics'));
 const ConfigurationPage = React.lazy(() => import('./pages/Configuration'));
 
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
           {
             path: 'create',
             element: <div>新建订单</div>,
+          },
+          {
+            path: 'scan',
+            element: <ScanOrderPage />,
           },
           {
             path: 'edit/:id',

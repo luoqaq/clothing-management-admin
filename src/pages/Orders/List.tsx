@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Descriptions, Form, Grid, Input, Modal, Table, Tag, Typography, message } from 'antd';
-import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { Button, Card, Descriptions, Form, Grid, Input, Modal, Space, Table, Tag, Typography, message } from 'antd';
+import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
 import { useOrders } from '../../hooks/useOrders';
@@ -19,6 +20,7 @@ const orderStatusMap: Record<OrderStatus, { text: string; color: string }> = {
 };
 
 const OrderList: React.FC = () => {
+  const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
   const {
     orders,
@@ -235,9 +237,14 @@ const OrderList: React.FC = () => {
               订单管理
             </Title>
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddVisible(true)}>
-            新建订单
-          </Button>
+          <Space>
+            <Button icon={<BarcodeOutlined />} onClick={() => navigate('/orders/scan')}>
+              扫码录单
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddVisible(true)}>
+              新建订单
+            </Button>
+          </Space>
         </div>
 
         <div className="filter-toolbar">

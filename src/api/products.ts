@@ -10,6 +10,7 @@ import type {
   ImportDraftProduct,
   BulkImportResult,
   ProductLabelItem,
+  ScannedSkuProduct,
 } from '../types';
 import { normalizeProduct } from '../utils/normalize';
 
@@ -62,6 +63,29 @@ export const productsApi = {
           productId: Number(item.productId),
           salePrice: Number(item.salePrice ?? 0),
         })),
+      };
+    }
+
+    return response;
+  },
+
+  getProductByCode: async (code: string) => {
+    const response = await api.get<ScannedSkuProduct>('/mobile/products/by-code', {
+      params: { code },
+    });
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          skuId: Number(response.data.skuId),
+          productId: Number(response.data.productId),
+          salePrice: Number(response.data.salePrice ?? 0),
+          stock: Number(response.data.stock ?? 0),
+          reservedStock: Number(response.data.reservedStock ?? 0),
+          availableStock: Number(response.data.availableStock ?? 0),
+        },
       };
     }
 

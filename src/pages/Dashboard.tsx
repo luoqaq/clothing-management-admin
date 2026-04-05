@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Row, Col, Card, Typography, Spin, Empty, message, Progress } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { Row, Col, Card, Typography, Spin, Empty, message, Progress, Button } from 'antd';
 import {
   DollarOutlined,
   ShoppingCartOutlined,
@@ -8,6 +9,8 @@ import {
   RiseOutlined,
   FallOutlined,
   ArrowUpOutlined,
+  BarcodeOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import { ECharts } from '../components/ECharts';
 import { useStatistics } from '../hooks/useStatistics';
@@ -25,6 +28,7 @@ interface SummaryCardItem {
 }
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const {
     salesSummary,
     salesData,
@@ -224,6 +228,31 @@ const Dashboard: React.FC = () => {
               </Card>
             </Col>
           ))}
+        </Row>
+
+        {/* 快捷操作 */}
+        <Row gutter={[18, 18]} style={{ marginBottom: 18 }}>
+          <Col xs={24}>
+            <Card className="dashboard-panel">
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Button 
+                  type="primary" 
+                  icon={<BarcodeOutlined />} 
+                  size="large"
+                  onClick={() => navigate('/orders/scan')}
+                >
+                  扫码录单
+                </Button>
+                <Button 
+                  icon={<PlusOutlined />} 
+                  size="large"
+                  onClick={() => navigate('/orders')}
+                >
+                  新建订单
+                </Button>
+              </div>
+            </Card>
+          </Col>
         </Row>
 
         <Row gutter={[18, 18]}>

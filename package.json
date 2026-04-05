@@ -20,6 +20,7 @@
     "dayjs": "^1.11.20",
     "echarts": "^6.0.0",
     "html-to-image": "^1.11.13",
+    "html5-qrcode": "^2.3.8",
     "jsbarcode": "^3.12.3",
     "msw": "^2.12.13",
     "qrcode": "^1.5.4",
