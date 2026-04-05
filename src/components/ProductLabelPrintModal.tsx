@@ -27,7 +27,7 @@ const layout = {
     subtitleLetterSpacing: 3,
     bottomSpacing: 12,
     subtitleMarginTop: 4,
-    fontFamily: '"Comic Sans MS", "Trebuchet MS", cursive',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   },
   info: {
     gap: 10,
