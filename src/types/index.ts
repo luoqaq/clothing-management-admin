@@ -235,6 +235,7 @@ export interface OrderItem {
   skuCode: string;
   image?: string | null;
   price: number;
+  soldPrice?: number;
   costPriceSnapshot?: number;
   quantity: number;
   color?: string | null;

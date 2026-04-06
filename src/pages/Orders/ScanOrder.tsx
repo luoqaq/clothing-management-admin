@@ -44,6 +44,7 @@ const { Title, Text } = Typography;
 
 interface CartItem extends ScannedSkuProduct {
   quantity: number;
+  soldPrice: number;
 }
 
 type ScanMode = 'camera' | 'input';
@@ -113,8 +114,16 @@ const ScanOrderPage: React.FC = () => {
       return 'updated';
     }
     
-    setCartItems((current) => [...current, { ...product, quantity: 1 }]);
+    setCartItems((current) => [...current, { ...product, quantity: 1, soldPrice: product.salePrice }]);
     return 'added';
+  };
+
+  const handleUpdateSoldPrice = (skuId: number, soldPrice: number) => {
+    if (soldPrice < 0) return;
+    setCartItems((current) =>
+      current.map((item) => (item.skuId === skuId ? { ...item, soldPrice } : item))
+    );
+    keepFocus();
   };
 
   const handleScan = async (code: string) => {
@@ -233,9 +242,8 @@ const ScanOrderPage: React.FC = () => {
       const values = await form.validateFields();
       setSubmitting(true);
 
-      const totalAmount = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
-      const discountAmount = values.discountAmount || 0;
-      const finalAmount = Math.max(totalAmount - discountAmount, 0);
+      const totalAmount = cartItems.reduce((sum, item) => sum + item.soldPrice * item.quantity, 0);
+      const finalAmount = totalAmount;
 
       const orderItems: OrderItem[] = cartItems.map((item) => ({
         id: 0,
@@ -245,6 +253,7 @@ const ScanOrderPage: React.FC = () => {
         skuCode: item.skuCode,
         image: item.image ?? null,
         price: item.salePrice,
+        soldPrice: item.soldPrice,
         quantity: item.quantity,
         color: item.color,
         size: item.size,
@@ -257,7 +266,6 @@ const ScanOrderPage: React.FC = () => {
         ageBucketId: values.ageBucketId || null,
         items: orderItems,
         totalAmount,
-        discountAmount,
         finalAmount,
         status: 'confirmed',
         paymentMethod: values.paymentMethod,
@@ -279,7 +287,7 @@ const ScanOrderPage: React.FC = () => {
     }
   };
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.soldPrice * item.quantity, 0);
   const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const columns = [
@@ -309,10 +317,24 @@ const ScanOrderPage: React.FC = () => {
       render: (_: any, item: CartItem) => `${item.color} / ${item.size}`,
     },
     {
-      title: '单价',
+      title: '原价',
       key: 'price',
       width: 100,
       render: (_: any, item: CartItem) => `¥${item.salePrice.toFixed(2)}`,
+    },
+    {
+      title: '售出价',
+      key: 'soldPrice',
+      width: 120,
+      render: (_: any, item: CartItem) => (
+        <InputNumber
+          min={0}
+          precision={2}
+          value={item.soldPrice}
+          onChange={(value) => value !== null && handleUpdateSoldPrice(item.skuId, Number(value))}
+          style={{ width: 90 }}
+        />
+      ),
     },
     {
       title: '数量',
@@ -357,7 +379,7 @@ const ScanOrderPage: React.FC = () => {
       key: 'subtotal',
       width: 100,
       render: (_: any, item: CartItem) => (
-        <Text strong>¥{(item.salePrice * item.quantity).toFixed(2)}</Text>
+        <Text strong>¥{(item.soldPrice * item.quantity).toFixed(2)}</Text>
       ),
     },
     {
@@ -509,7 +531,6 @@ const ScanOrderPage: React.FC = () => {
           <Form
             form={form}
             layout="vertical"
-            initialValues={{ discountAmount: 0 }}
           >
             <Row gutter={16}>
               <Col xs={24} sm={12} md={6}>
@@ -552,18 +573,7 @@ const ScanOrderPage: React.FC = () => {
                   <Select placeholder="请选择" options={paymentMethodOptions} />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={12} md={6}>
-                <Form.Item name="discountAmount" label="优惠金额">
-                  <InputNumber
-                    min={0}
-                    max={totalAmount}
-                    precision={2}
-                    style={{ width: '100%' }}
-                    placeholder="0.00"
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} sm={24} md={12}>
+              <Col xs={24} sm={24} md={18}>
                 <Form.Item name="note" label="备注">
                   <Input.TextArea rows={1} placeholder="订单备注信息" />
                 </Form.Item>
@@ -582,7 +592,7 @@ const ScanOrderPage: React.FC = () => {
           <Space size="large">
             <Statistic
               title="应收金额"
-              value={totalAmount - (form.getFieldValue('discountAmount') || 0)}
+              value={totalAmount}
               precision={2}
               prefix="¥"
               valueStyle={{ color: '#cf1322' }}

@@ -1,6 +1,33 @@
 # 服装管理后台前端 - 项目记忆
 
-最近更新：2026-04-05
+最近更新：2026-04-06
+
+## 会话更新（2026-04-06）
+- 已完成一次针对生产环境的只读巡检，确认当前线上后台站点可访问：
+  - `https://clothing.chuchu9.cn` 返回 `200`
+  - `https://clothing.chuchu9.cn/api/auth/me` 未登录返回 `401`
+  - 线上静态文件 `/var/clothing/admin/dist/index.html` 最近修改时间为 `2026-04-06 21:46:14 CST`
+- 但本轮巡检同时确认：当前线上前端**还不是“订单录入改为售出价格”这波最新代码**：
+  - 线上仓库 `/var/clothing/admin` 当前提交仍为 `1154939`
+  - 线上源码 `src/pages/Orders/OrderForm.tsx`、`src/pages/Orders/ScanOrder.tsx` 仍保留 `discountAmount / 优惠金额` 逻辑，尚未包含 `soldPrice / 售出价格` 录单实现
+- 当前本地前端与该需求直接相关的改动仍停留在工作区：
+  - `src/pages/Orders/List.tsx`
+  - `src/pages/Orders/OrderForm.tsx`
+  - `src/pages/Orders/ScanOrder.tsx`
+  - `src/types/index.ts`
+
+## 会话更新（2026-04-05）
+- 已将后台商品标签导出字体栈修复推送到远端主分支：
+  - 当前提交：`1154939`
+- 已完成生产前端发布并验证：
+  - 线上前端仓库 `/var/clothing/admin` 已更新到 `1154939`
+  - `https://clothing.chuchu9.cn` 返回 `200`
+  - `https://clothing.chuchu9.cn/api/auth/me` 在未登录状态下返回 `401`
+- 本次验证已执行：
+  - 本地 `npm run build` 通过
+  - 远端 `bash deploy/release.sh admin` 执行成功
+  - `curl -I https://clothing.chuchu9.cn` 返回 `200`
+  - `curl https://clothing.chuchu9.cn/api/auth/me` 返回 `401`
 
 ## 会话更新（2026-04-05）
 - 已修复后台商品标签在 iPad Safari 下载 PNG 时二维码缺失的问题：

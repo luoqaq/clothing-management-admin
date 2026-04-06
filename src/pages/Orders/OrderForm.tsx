@@ -39,6 +39,7 @@ interface CartItem {
   color: string;
   size: string;
   price: number;
+  soldPrice: number;
   availableStock: number;
   quantity: number;
 }
@@ -108,6 +109,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           color: specification.color,
           size: specification.size,
           price: specification.salePrice,
+          soldPrice: specification.salePrice,
           availableStock: specification.availableStock,
           quantity: 1,
           categoryId: product.categoryId,
@@ -119,9 +121,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
     return rows;
   }, [categoryId, products, searchText]);
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discountAmount = Form.useWatch('discountAmount', form) || 0;
-  const finalAmount = Math.max(totalAmount - discountAmount, 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.soldPrice * item.quantity, 0);
+  const finalAmount = totalAmount;
   const selectorModalWidth = screens.lg ? 980 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
   const addCartItem = (row: CartItem, quantityDelta = row.quantity) => {
@@ -162,6 +163,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
     );
   };
 
+  const handleUpdateSoldPrice = (skuId: number, soldPrice: number) => {
+    if (soldPrice < 0) return;
+    setCartItems((current) =>
+      current.map((item) => (item.skuId === skuId ? { ...item, soldPrice } : item))
+    );
+  };
+
   const handleRemove = (skuId: number) => {
     setCartItems((current) => current.filter((item) => item.skuId !== skuId));
   };
@@ -176,6 +184,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
     color: product.color,
     size: product.size,
     price: product.salePrice,
+    soldPrice: product.salePrice,
     availableStock: product.availableStock,
     quantity: 1,
   });
@@ -225,12 +234,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
         skuCode: item.skuCode,
         image: item.image ?? null,
         price: item.price,
+        soldPrice: item.soldPrice,
         quantity: item.quantity,
         color: item.color,
         size: item.size,
       })),
       totalAmount,
-      discountAmount,
       finalAmount,
       status: 'confirmed',
       address: {},
@@ -241,7 +250,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ discountAmount: 0 }} className="editor-form">
+    <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
       <div className="editor-form__toolbar">
         <Space>
           <Button onClick={onCancel}>取消</Button>
@@ -315,10 +324,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
               render: (_, item: CartItem) => `${item.color} / ${item.size}`,
             },
             {
-              title: '单价',
+              title: '原价',
               dataIndex: 'price',
               key: 'price',
               render: (value: number) => `¥${value.toFixed(2)}`,
+            },
+            {
+              title: '售出价格',
+              key: 'soldPrice',
+              render: (_, item: CartItem) => (
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  value={item.soldPrice}
+                  onChange={(value) => value !== null && handleUpdateSoldPrice(item.skuId, Number(value))}
+                  style={{ width: 100 }}
+                />
+              ),
             },
             {
               title: '数量',
@@ -353,7 +375,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
             {
               title: '小计',
               key: 'subtotal',
-              render: (_, item: CartItem) => `¥${(item.price * item.quantity).toFixed(2)}`,
+              render: (_, item: CartItem) => `¥${(item.soldPrice * item.quantity).toFixed(2)}`,
             },
             {
               title: '操作',
@@ -391,11 +413,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
               />
             </Form.Item>
           </Col>
-          <Col xs={24} md={8}>
-            <Form.Item name="discountAmount" label="优惠金额">
-              <InputNumber min={0} precision={2} style={{ width: '100%' }} />
-            </Form.Item>
-          </Col>
+
         </Row>
         <Form.Item name="note" label="备注">
           <Input.TextArea rows={3} placeholder="记录门店订单说明、到店时间、售后备注等" />

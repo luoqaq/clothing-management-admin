@@ -301,9 +301,10 @@ const OrderList: React.FC = () => {
                 { title: '商品', dataIndex: 'productName', key: 'productName', minWidth: 180 },
                 { title: '规格', key: 'specification', minWidth: 130, render: (_, item) => `${item.color || '-'} / ${item.size || '-'}` },
                 { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode', minWidth: 150 },
-                { title: '单价', dataIndex: 'price', key: 'price', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '原价', dataIndex: 'price', key: 'price', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
+                { title: '售出价', dataIndex: 'soldPrice', key: 'soldPrice', minWidth: 100, render: (value: number) => `¥${(value || 0).toFixed(2)}` },
                 { title: '数量', dataIndex: 'quantity', key: 'quantity', minWidth: 90 },
-                { title: '小计', key: 'subtotal', minWidth: 110, render: (_, item) => `¥${(item.price * item.quantity).toFixed(2)}` },
+                { title: '小计', key: 'subtotal', minWidth: 110, render: (_, item) => `¥${((item.soldPrice || item.price) * item.quantity).toFixed(2)}` },
               ]}
             />
           </div>
