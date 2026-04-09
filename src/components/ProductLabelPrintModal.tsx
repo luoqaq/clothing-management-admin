@@ -3,6 +3,7 @@ import { Button, Empty, Modal, Space, message } from 'antd';
 import type { CSSProperties } from 'react';
 import { toPng } from 'html-to-image';
 import QRCode from 'qrcode';
+import JSZip from 'jszip';
 import type { ProductLabelItem } from '../types';
 
 const BORDER_COLOR = '#ccc';
@@ -214,6 +215,18 @@ async function exportLabelNode(target: HTMLDivElement) {
   }
 }
 
+function dataUrlToUint8Array(dataUrl: string) {
+  const base64 = dataUrl.split(',')[1] ?? '';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return bytes;
+}
+
 interface ProductLabelPrintModalProps {
   open: boolean;
   loading?: boolean;
@@ -303,6 +316,8 @@ export default function ProductLabelPrintModal({
 
     setDownloading(true);
     try {
+      const zip = new JSZip();
+
       for (const label of labels) {
         const target = labelRefs.current[label.skuId];
         if (!target) {
@@ -310,15 +325,53 @@ export default function ProductLabelPrintModal({
         }
 
         const dataUrl = await exportLabelNode(target);
-
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `${label.productCode}-${label.color}-${label.size}-${label.barcode}.png`;
-        link.rel = 'noopener';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        zip.file(
+          `${label.productCode}-${label.color}-${label.size}-${label.barcode}.png`,
+          dataUrlToUint8Array(dataUrl)
+        );
       }
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      const objectUrl = URL.createObjectURL(blob);
+      link.href = objectUrl;
+      link.download = `product-labels-${Date.now()}.zip`;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error(error);
+      void messageApi.error('导出标签 ZIP 失败，请重试');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadSingle = async (label: ProductLabelItem) => {
+    const target = labelRefs.current[label.skuId];
+    if (!target) {
+      void messageApi.warning('当前标签尚未准备好，请稍后再试');
+      return;
+    }
+
+    if (!readyMap[label.barcode]) {
+      void messageApi.warning('二维码仍在准备中，请稍后再试');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const dataUrl = await exportLabelNode(target);
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${label.productCode}-${label.color}-${label.size}-${label.barcode}.png`;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error(error);
       void messageApi.error('导出标签图片失败，请重试');
@@ -337,7 +390,7 @@ export default function ProductLabelPrintModal({
         <Space>
           <Button onClick={onCancel}>关闭</Button>
           <Button type='primary' onClick={() => void handleDownload()} disabled={labels.length === 0 || loading || !allQrCodesReady} loading={downloading}>
-            下载标签图片
+            下载标签 ZIP
           </Button>
         </Space>
       }
@@ -352,45 +405,53 @@ export default function ProductLabelPrintModal({
             style={{ display: 'flex', flexDirection: 'row', gap: layout.previewGrid.gap, overflowX: 'auto', paddingBottom: layout.previewGrid.paddingBottom }}
           >
             {labels.map((label) => (
-              <div
-                key={label.skuId}
-                className='label-card'
-                ref={(node) => {
-                  labelRefs.current[label.skuId] = node;
-                }}
-                style={styles.card}
-              >
-                <div className='label-brand' style={styles.brand}>
-                  <div style={styles.brandTitle}>{layout.brand.title}</div>
-                  <div style={styles.brandSubtitle}>{layout.brand.subtitle}</div>
-                </div>
-
-                <div className='label-info' style={styles.info}>
-                  <div style={styles.productName}>{label.productName}</div>
-
-                  <div style={styles.colorSize}>
-                    <span style={{ fontWeight: 400 }}>{label.color}</span>
-                    <span style={styles.colorSizeDivider}>|</span>
-                    <span style={{ fontWeight: 400 }}>{label.size}</span>
+              <div key={label.skuId} style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
+                <div
+                  className='label-card'
+                  ref={(node) => {
+                    labelRefs.current[label.skuId] = node;
+                  }}
+                  style={styles.card}
+                >
+                  <div className='label-brand' style={styles.brand}>
+                    <div style={styles.brandTitle}>{layout.brand.title}</div>
+                    <div style={styles.brandSubtitle}>{layout.brand.subtitle}</div>
                   </div>
 
-                  <div style={styles.priceWrap}>
-                    <span style={styles.priceSymbol}>¥</span>
-                    <span style={styles.priceValue}>{label.salePrice.toFixed(2)}</span>
+                  <div className='label-info' style={styles.info}>
+                    <div style={styles.productName}>{label.productName}</div>
+
+                    <div style={styles.colorSize}>
+                      <span style={{ fontWeight: 400 }}>{label.color}</span>
+                      <span style={styles.colorSizeDivider}>|</span>
+                      <span style={{ fontWeight: 400 }}>{label.size}</span>
+                    </div>
+
+                    <div style={styles.priceWrap}>
+                      <span style={styles.priceSymbol}>¥</span>
+                      <span style={styles.priceValue}>{label.salePrice.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className='label-qr-area' style={styles.qrArea}>
+                    <canvas
+                      ref={(node) => {
+                        qrCanvasRefs.current[label.barcode] = node;
+                      }}
+                      width={layout.qr.innerSize}
+                      height={layout.qr.innerSize}
+                      style={readyMap[label.barcode] ? styles.qrCanvas : { ...styles.qrCanvas, visibility: 'hidden' }}
+                    />
+                    {!readyMap[label.barcode] ? <div style={{ ...styles.qrPlaceholder, position: 'absolute', pointerEvents: 'none' }} /> : null}
                   </div>
                 </div>
-
-                <div className='label-qr-area' style={styles.qrArea}>
-                  <canvas
-                    ref={(node) => {
-                      qrCanvasRefs.current[label.barcode] = node;
-                    }}
-                    width={layout.qr.innerSize}
-                    height={layout.qr.innerSize}
-                    style={readyMap[label.barcode] ? styles.qrCanvas : { ...styles.qrCanvas, visibility: 'hidden' }}
-                  />
-                  {!readyMap[label.barcode] ? <div style={{ ...styles.qrPlaceholder, position: 'absolute', pointerEvents: 'none' }} /> : null}
-                </div>
+                <Button
+                  block
+                  onClick={() => void handleDownloadSingle(label)}
+                  disabled={loading || downloading || !readyMap[label.barcode]}
+                >
+                  下载当前标签
+                </Button>
               </div>
             ))}
           </div>
