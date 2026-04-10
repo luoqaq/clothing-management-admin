@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Descriptions, Form, Grid, Input, Modal, Space, Table, Tag, Typography, message } from 'antd';
-import { CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
+import { CaretDownOutlined, CaretUpOutlined, CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
+import type { TablePaginationConfig, TableProps } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
 import { useOrders } from '../../hooks/useOrders';
@@ -19,6 +20,11 @@ const orderStatusMap: Record<OrderStatus, { text: string; color: string }> = {
   refunded: { text: '已退款', color: 'magenta' },
 };
 
+const defaultFilters: OrderFilters = {
+  sortBy: 'createdAt',
+  sortOrder: 'desc',
+};
+
 const OrderList: React.FC = () => {
   const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
@@ -27,7 +33,6 @@ const OrderList: React.FC = () => {
     currentOrder,
     loading,
     pagination,
-    filters,
     getOrders,
     getOrderById,
     updateOrderStatus,
@@ -37,6 +42,7 @@ const OrderList: React.FC = () => {
   } = useOrders();
 
   const [searchText, setSearchText] = useState('');
+  const [queryFilters, setQueryFilters] = useState<OrderFilters>(defaultFilters);
   const [detailVisible, setDetailVisible] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
   const [refundVisible, setRefundVisible] = useState(false);
@@ -49,25 +55,29 @@ const OrderList: React.FC = () => {
   const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
 
   useEffect(() => {
-    void getOrders({ page: 1, pageSize: 10 });
+    void getOrders({ page: 1, pageSize: 10, filters: defaultFilters });
   }, []);
 
   const reload = (params?: { page?: number; pageSize?: number; filters?: OrderFilters }) =>
-    getOrders(params ?? { page: pagination.page, pageSize: pagination.pageSize, filters });
+    getOrders(params ?? { page: pagination.page, pageSize: pagination.pageSize, filters: queryFilters });
 
   const handleSearch = () => {
+    const nextFilters = {
+      ...queryFilters,
+      search: searchText || undefined,
+    };
+    setQueryFilters(nextFilters);
     void reload({
       page: 1,
       pageSize: 10,
-      filters: {
-        search: searchText || undefined,
-      },
+      filters: nextFilters,
     });
   };
 
   const handleReset = () => {
     setSearchText('');
-    void reload({ page: 1, pageSize: 10, filters: {} });
+    setQueryFilters(defaultFilters);
+    void reload({ page: 1, pageSize: 10, filters: defaultFilters });
   };
 
   const handleViewDetail = async (id: number) => {
@@ -139,7 +149,30 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const columns = [
+  const toggleCreatedAtSort = () => {
+    const nextSortOrder: OrderFilters['sortOrder'] = queryFilters.sortOrder === 'asc' ? 'desc' : 'asc';
+    const nextFilters = {
+      ...queryFilters,
+      sortBy: 'createdAt' as const,
+      sortOrder: nextSortOrder,
+    };
+    setQueryFilters(nextFilters);
+    void reload({
+      page: 1,
+      pageSize: pagination.pageSize,
+      filters: nextFilters,
+    });
+  };
+
+  const handleTableChange: TableProps<Order>['onChange'] = (nextPagination: TablePaginationConfig) => {
+    void reload({
+      page: nextPagination.current ?? 1,
+      pageSize: nextPagination.pageSize ?? pagination.pageSize,
+      filters: queryFilters,
+    });
+  };
+
+  const columns: TableProps<Order>['columns'] = [
     {
       title: '订单号',
       dataIndex: 'orderNo',
@@ -166,8 +199,12 @@ const OrderList: React.FC = () => {
       render: (items: Order['items']) => (
         <div>
           <div>{items.length} 个规格</div>
-          <div style={{ color: '#8c8c8c' }}>
-            {items.slice(0, 2).map((item) => `${item.productName} (${item.color} / ${item.size})`).join('，')}
+          <div style={{ color: '#8c8c8c', display: 'grid', gap: 4 }}>
+            {items.map((item) => (
+              <div key={item.id}>
+                {item.productName} ({item.color || '-'} / {item.size || '-'}) x {item.quantity}
+              </div>
+            ))}
           </div>
         </div>
       ),
@@ -190,7 +227,26 @@ const OrderList: React.FC = () => {
       },
     },
     {
-      title: '下单时间',
+      title: (
+        <button
+          type="button"
+          onClick={toggleCreatedAtSort}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: 0,
+            border: 'none',
+            background: 'transparent',
+            color: 'inherit',
+            font: 'inherit',
+            cursor: 'pointer',
+          }}
+        >
+          <span>下单时间</span>
+          {queryFilters.sortOrder === 'asc' ? <CaretUpOutlined /> : <CaretDownOutlined />}
+        </button>
+      ),
       dataIndex: 'createdAt',
       key: 'createdAt',
       minWidth: 160,
@@ -271,8 +327,8 @@ const OrderList: React.FC = () => {
             pageSize: pagination.pageSize,
             total: pagination.total,
             showTotal: (total) => `共 ${total} 条`,
-            onChange: (page, pageSize) => void reload({ page, pageSize, filters }),
           }}
+          onChange={handleTableChange}
         />
       </Card>
 

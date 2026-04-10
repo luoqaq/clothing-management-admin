@@ -286,6 +286,8 @@ export interface OrderFilters {
   paymentStatus?: string;
   startDate?: string;
   endDate?: string;
+  sortBy?: 'createdAt';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface OrderState {
