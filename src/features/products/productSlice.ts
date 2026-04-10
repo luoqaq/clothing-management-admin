@@ -192,6 +192,23 @@ export const parseExcelImport = createAsyncThunk(
   }
 );
 
+export const parseExcelFileImport = createAsyncThunk(
+  'products/parseExcelFileImport',
+  async (file: File, { rejectWithValue }) => {
+    try {
+      const response = await productsApi.parseExcelFileImport(file);
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+
+      return rejectWithValue(response.message || '服务器解析 Excel 失败');
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error, '服务器解析 Excel 失败'));
+    }
+  }
+);
+
 export const parseImageImport = createAsyncThunk(
   'products/parseImageImport',
   async (file: File, { rejectWithValue }) => {
@@ -540,6 +557,19 @@ const productSlice = createSlice({
         state.error = null;
       })
       .addCase(parseExcelImport.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(parseExcelFileImport.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(parseExcelFileImport.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(parseExcelFileImport.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

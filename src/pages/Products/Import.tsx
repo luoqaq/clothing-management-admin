@@ -168,6 +168,7 @@ const ProductImportPage: React.FC = () => {
     getSuppliers,
     getProducts,
     parseExcelImport,
+    parseExcelFileImport,
     parseImageImport,
     bulkCreateProducts,
   } = useProducts();
@@ -275,7 +276,34 @@ const ProductImportPage: React.FC = () => {
       setStep(1);
       message.success(`已识别 ${result.drafts.length} 条商品草稿`);
     } catch (error) {
-      message.error('读取 Excel 失败，请检查文件格式');
+      const fallback = '浏览器读取 Excel 失败，请检查文件格式或改用 Pad 导入 Excel';
+      message.error(error instanceof Error && error.message ? error.message : fallback);
+    } finally {
+      setIsParsing(false);
+      setProcessingText('');
+    }
+
+    return false;
+  };
+
+  const uploadExcelAndParseOnServer = async (file: File) => {
+    try {
+      setIsParsing(true);
+      setProcessingText('正在上传 Excel 并由服务器解析...');
+      const result = await parseExcelFileImport(file);
+      if (!result) {
+        return false;
+      }
+
+      setDrafts(result.drafts);
+      setExpandedDraftKeys(result.drafts.slice(0, 1).map((item) => item.rowKey));
+      setServerIssues(result.issues);
+      setImportResult(null);
+      setStep(1);
+      message.success(`服务器已识别 ${result.drafts.length} 条商品草稿`);
+    } catch (error) {
+      const fallback = 'Pad 导入 Excel 失败，请稍后重试或检查网络后重试';
+      message.error(error instanceof Error && error.message ? error.message : fallback);
     } finally {
       setIsParsing(false);
       setProcessingText('');
@@ -459,24 +487,43 @@ const ProductImportPage: React.FC = () => {
 
       {step === 0 ? (
         <Row gutter={[20, 20]}>
-          <Col xs={24} lg={12}>
-            <Card className="page-card" title="导入 Excel">
-              <Dragger beforeUpload={(file) => readExcelAndParse(file as File)} showUploadList={false} disabled={isProcessing} accept=".xlsx,.xls">
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">{isParsing ? 'Excel 分析中，请稍候...' : '拖拽 Excel 到这里，或点击选择文件'}</p>
-              </Dragger>
+          <Col xs={24} lg={8}>
+            <Card className="page-card import-entry-card" title="导入 Excel">
+              <Space direction="vertical" size={12} className="import-entry-card__content">
+                <Text type="secondary">适合桌面浏览器：先在本地读取 Excel，再调用 AI 分析商品信息。</Text>
+                <Dragger beforeUpload={(file) => readExcelAndParse(file as File)} showUploadList={false} disabled={isProcessing} accept=".xlsx,.xls">
+                  <p className="ant-upload-drag-icon">
+                    <InboxOutlined />
+                  </p>
+                  <p className="ant-upload-text">{isParsing ? 'Excel 分析中，请稍候...' : '拖拽 Excel 到这里，或点击选择文件'}</p>
+                </Dragger>
+              </Space>
             </Card>
           </Col>
-          <Col xs={24} lg={12}>
-            <Card className="page-card" title="导入截图">
-              <Dragger beforeUpload={(file) => uploadImageAndParse(file as File)} showUploadList={false} disabled={isProcessing} accept="image/*">
-                <p className="ant-upload-drag-icon">
-                  <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">{isParsing ? '截图识别中，请稍候...' : '拖拽截图到这里，或点击选择图片'}</p>
-              </Dragger>
+          <Col xs={24} lg={8}>
+            <Card className="page-card import-entry-card" title="Pad 导入 Excel">
+              <Space direction="vertical" size={12} className="import-entry-card__content">
+                <Text type="secondary">Pad 推荐使用：直接上传 Excel 到服务器解析，避免浏览器本地解析失败。</Text>
+                <Dragger beforeUpload={(file) => uploadExcelAndParseOnServer(file as File)} showUploadList={false} disabled={isProcessing} accept=".xlsx,.xls">
+                  <p className="ant-upload-drag-icon">
+                    <InboxOutlined />
+                  </p>
+                  <p className="ant-upload-text">{isParsing ? '服务器正在解析 Excel，请稍候...' : '拖拽 Excel 到这里，或点击选择文件'}</p>
+                </Dragger>
+              </Space>
+            </Card>
+          </Col>
+          <Col xs={24} lg={8}>
+            <Card className="page-card import-entry-card" title="导入截图">
+              <Space direction="vertical" size={12} className="import-entry-card__content">
+                <Text type="secondary">适合货单截图或聊天图片：上传图片后由 AI 识别商品与规格信息。</Text>
+                <Dragger beforeUpload={(file) => uploadImageAndParse(file as File)} showUploadList={false} disabled={isProcessing} accept="image/*">
+                  <p className="ant-upload-drag-icon">
+                    <InboxOutlined />
+                  </p>
+                  <p className="ant-upload-text">{isParsing ? '截图识别中，请稍候...' : '拖拽截图到这里，或点击选择图片'}</p>
+                </Dragger>
+              </Space>
             </Card>
           </Col>
           <Col xs={24}>

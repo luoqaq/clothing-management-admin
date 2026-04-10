@@ -185,6 +185,18 @@ export const productsApi = {
     });
   },
 
+  parseExcelFileImport: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return api.post<ImportParseResult>('/products/import/parse-excel-file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 180000,
+    });
+  },
+
   parseImageImport: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

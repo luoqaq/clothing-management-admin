@@ -13,6 +13,7 @@ import {
   fetchSuppliers,
   updateProductStock,
   parseExcelImport as parseExcelImportAction,
+  parseExcelFileImport as parseExcelFileImportAction,
   parseImageImport as parseImageImportAction,
   bulkCreateProducts as bulkCreateProductsAction,
   createCategory,
@@ -204,6 +205,15 @@ export const useProducts = () => {
     }
   };
 
+  const parseExcelFileImport = async (file: File) => {
+    try {
+      const result = await dispatch(parseExcelFileImportAction(file)).unwrap();
+      return result;
+    } catch (err) {
+      return handleActionError(err, '服务器解析 Excel 失败');
+    }
+  };
+
   const parseImageImport = async (file: File) => {
     try {
       const result = await dispatch(parseImageImportAction(file)).unwrap();
@@ -264,6 +274,7 @@ export const useProducts = () => {
     getSuppliers,
     updateStock,
     parseExcelImport,
+    parseExcelFileImport,
     parseImageImport,
     bulkCreateProducts,
     getProductLabels,
