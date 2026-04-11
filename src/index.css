@@ -1746,6 +1746,22 @@ img {
   border-radius: 10px;
 }
 
+.touch-select-dropdown.ant-select-dropdown {
+  overscroll-behavior: contain;
+}
+
+.touch-select-dropdown .rc-virtual-list,
+.touch-select-dropdown .rc-virtual-list-holder,
+.touch-select-dropdown .ant-select-item-option-content {
+  -webkit-overflow-scrolling: touch;
+}
+
+.touch-select-dropdown .rc-virtual-list,
+.touch-select-dropdown .rc-virtual-list-holder {
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
 @media (max-width: 1200px) {
   .app-header.ant-layout-header {
     align-items: flex-start;

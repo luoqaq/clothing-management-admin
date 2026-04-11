@@ -22,6 +22,7 @@ import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-de
 import { useProducts } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminUser } from '../../utils/role';
+import { touchFriendlySelectProps } from '../../utils/touchSelect';
 import ProductForm from './ProductForm';
 import ProductLabelPrintModal from '../../components/ProductLabelPrintModal';
 import type { Product, ProductFilters, ProductLabelItem, ProductStatus, ProductSpecification } from '../../types';
@@ -386,6 +387,7 @@ const ProductList: React.FC = () => {
             value={selectedCategory}
             options={categories.map((item) => ({ label: item.name, value: item.id }))}
             onChange={(value) => handleFilterChange({ selectedCategory: value })}
+            {...touchFriendlySelectProps}
           />
           {isAdmin ? (
             <Select
@@ -395,6 +397,7 @@ const ProductList: React.FC = () => {
               value={selectedSupplier}
               options={suppliers.map((item) => ({ label: item.name, value: item.id }))}
               onChange={(value) => handleFilterChange({ selectedSupplier: value })}
+              {...touchFriendlySelectProps}
             />
           ) : null}
           <Select
@@ -408,6 +411,7 @@ const ProductList: React.FC = () => {
               { label: '已下架', value: 'inactive' },
             ]}
             onChange={(value) => handleFilterChange({ selectedStatus: value })}
+            {...touchFriendlySelectProps}
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>

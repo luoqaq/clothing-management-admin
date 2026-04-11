@@ -8,6 +8,7 @@ import type { Order, OrderFilters, OrderStatus } from '../../types';
 import { useOrders } from '../../hooks/useOrders';
 import OrderForm from './OrderForm';
 import { getErrorMessage } from '../../utils/error';
+import { touchFriendlySelectProps } from '../../utils/touchSelect';
 
 const { Title, Text } = Typography;
 
@@ -333,6 +334,7 @@ const OrderList: React.FC = () => {
               { label: '已取消', value: 'cancelled' },
             ]}
             allowClear
+            {...touchFriendlySelectProps}
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
