@@ -9,10 +9,10 @@ import type { ProductLabelItem } from '../types';
 const BORDER_COLOR = '#ccc';
 const layout = {
   card: {
-    width: 240,
-    height: 360,
-    padding: 18,
-    borderRadius: 16,
+    width: 472,
+    height: 709,
+    padding: 35,
+    borderRadius: 31,
     backgroundColor: '#fff',
   },
   previewGrid: {
@@ -22,34 +22,34 @@ const layout = {
   brand: {
     title: 'ChuChuNight',
     subtitle: '棉眠小铺 면면샵',
-    titleFontSize: 20,
-    subtitleFontSize: 16,
+    titleFontSize: 39,
+    subtitleFontSize: 31,
     titleLetterSpacing: 1,
     subtitleLetterSpacing: 2,
-    bottomSpacing: 10,
-    subtitleMarginTop: 4,
+    bottomSpacing: 20,
+    subtitleMarginTop: 8,
     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   },
   info: {
-    gap: 8,
-    nameFontSize: 22,
+    gap: 4,
+    nameFontSize: 43,
     nameLineHeight: 1.3,
-    nameMinHeight: 52,
-    colorSizeFontSize: 17,
-    colorSizeGap: 10,
-    priceMarginTop: 2,
-    pricePaddingY: 2,
-    priceSymbolFontSize: 15,
-    priceSymbolMarginRight: 4,
-    priceValueFontSize: 36,
+    nameMinHeight: 51,
+    colorSizeFontSize: 33,
+    colorSizeGap: 20,
+    priceMarginTop: 20,
+    pricePaddingY: 4,
+    priceSymbolFontSize: 29,
+    priceSymbolMarginRight: 8,
+    priceValueFontSize: 71,
     priceLetterSpacing: -0.5,
   },
   qr: {
-    dividerPaddingTop: 6,
-    canvasSize: 98,
-    innerSize: 90,
-    innerPadding: 4,
-    borderRadius: 10,
+    dividerPaddingTop: 12,
+    canvasSize: 192,
+    innerSize: 176,
+    innerPadding: 8,
+    borderRadius: 19,
     placeholderColor: '#eee',
   },
 } as const;
@@ -58,7 +58,6 @@ function createLabelStyles(): Record<string, CSSProperties> {
   return {
     card: {
       background: layout.card.backgroundColor,
-      border: `1px solid ${BORDER_COLOR}`,
       borderRadius: layout.card.borderRadius,
       padding: layout.card.padding,
       width: layout.card.width,
@@ -72,7 +71,6 @@ function createLabelStyles(): Record<string, CSSProperties> {
     brand: {
       textAlign: 'center',
       paddingBottom: layout.brand.bottomSpacing,
-      borderBottom: `0.5px solid ${BORDER_COLOR}`,
       marginBottom: layout.brand.bottomSpacing,
     },
     brandTitle: {
@@ -94,6 +92,7 @@ function createLabelStyles(): Record<string, CSSProperties> {
       display: 'flex',
       flexDirection: 'column',
       gap: layout.info.gap,
+      paddingTop: 30,
     },
     productName: {
       fontSize: layout.info.nameFontSize,
@@ -142,13 +141,11 @@ function createLabelStyles(): Record<string, CSSProperties> {
       display: 'flex',
       justifyContent: 'center',
       paddingTop: layout.qr.dividerPaddingTop,
-      borderTop: `0.5px solid ${BORDER_COLOR}`,
     },
     qrCanvas: {
       width: layout.qr.canvasSize,
       height: layout.qr.canvasSize,
       borderRadius: layout.qr.borderRadius,
-      border: `1px solid ${BORDER_COLOR}`,
       background: '#fff',
       boxSizing: 'border-box',
       display: 'block',
@@ -158,7 +155,6 @@ function createLabelStyles(): Record<string, CSSProperties> {
       height: layout.qr.canvasSize,
       background: layout.qr.placeholderColor,
       borderRadius: layout.qr.borderRadius,
-      border: `1px solid ${BORDER_COLOR}`,
       boxSizing: 'border-box',
     },
   };
@@ -168,6 +164,8 @@ const styles = createLabelStyles();
 
 async function exportLabelNode(target: HTMLDivElement) {
   const exportRoot = target.cloneNode(true) as HTMLDivElement;
+  exportRoot.style.transform = 'none';
+  exportRoot.style.transformOrigin = 'unset';
   const sourceCanvases = Array.from(target.querySelectorAll('canvas'));
   const clonedCanvases = Array.from(exportRoot.querySelectorAll('canvas'));
 
@@ -405,14 +403,23 @@ export default function ProductLabelPrintModal({
             style={{ display: 'flex', flexDirection: 'row', gap: layout.previewGrid.gap, overflowX: 'auto', paddingBottom: layout.previewGrid.paddingBottom }}
           >
             {labels.map((label) => (
-              <div key={label.skuId} style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
+              <div key={label.skuId} style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0, alignItems: 'center' }}>
                 <div
-                  className='label-card'
-                  ref={(node) => {
-                    labelRefs.current[label.skuId] = node;
+                  style={{
+                    width: layout.card.width / 2,
+                    height: layout.card.height / 2,
+                    overflow: 'hidden',
+                    borderRadius: layout.card.borderRadius,
+                    background: layout.card.backgroundColor,
                   }}
-                  style={styles.card}
                 >
+                  <div
+                    className='label-card'
+                    ref={(node) => {
+                      labelRefs.current[label.skuId] = node;
+                    }}
+                    style={{ ...styles.card, transform: 'scale(0.5)', transformOrigin: 'top left' }}
+                  >
                   <div className='label-brand' style={styles.brand}>
                     <div style={styles.brandTitle}>{layout.brand.title}</div>
                     <div style={styles.brandSubtitle}>{layout.brand.subtitle}</div>
@@ -443,6 +450,7 @@ export default function ProductLabelPrintModal({
                       style={readyMap[label.barcode] ? styles.qrCanvas : { ...styles.qrCanvas, visibility: 'hidden' }}
                     />
                     {!readyMap[label.barcode] ? <div style={{ ...styles.qrPlaceholder, position: 'absolute', pointerEvents: 'none' }} /> : null}
+                  </div>
                   </div>
                 </div>
                 <Button
