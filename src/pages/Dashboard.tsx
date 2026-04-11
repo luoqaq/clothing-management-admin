@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Typography, Spin, Empty, message, Progress, Button } from 'antd';
+import { Row, Col, Card, Typography, Spin, Empty, message, Progress, Button, Segmented, DatePicker } from 'antd';
 import {
   DollarOutlined,
   ShoppingCartOutlined,
@@ -12,10 +12,57 @@ import {
   BarcodeOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { ECharts } from '../components/ECharts';
 import { useStatistics } from '../hooks/useStatistics';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
+
+type TimeTab = 'today' | 'week' | 'month' | 'all' | 'custom';
+
+const timeTabOptions = [
+  { label: '今日', value: 'today' },
+  { label: '本周', value: 'week' },
+  { label: '本月', value: 'month' },
+  { label: '全部', value: 'all' },
+  { label: '自定义', value: 'custom' },
+];
+
+const tabLabelMap: Record<TimeTab, string> = {
+  today: '今日',
+  week: '本周',
+  month: '本月',
+  all: '累计',
+  custom: '自定义',
+};
+
+function getDateRangeByTab(tab: TimeTab): { start: string; end: string } {
+  const now = dayjs();
+  const todayStr = now.format('YYYY-MM-DD');
+  switch (tab) {
+    case 'today':
+      return { start: todayStr, end: todayStr };
+    case 'week': {
+      const day = now.day();
+      const diff = day === 0 ? -6 : 1 - day;
+      const monday = now.add(diff, 'day');
+      return { start: monday.format('YYYY-MM-DD'), end: todayStr };
+    }
+    case 'month':
+      return {
+        start: now.startOf('month').format('YYYY-MM-DD'),
+        end: todayStr,
+      };
+    case 'all':
+      return {
+        start: '2000-01-01',
+        end: todayStr,
+      };
+    default:
+      return { start: todayStr, end: todayStr };
+  }
+}
 
 interface SummaryCardItem {
   key: string;
@@ -35,23 +82,59 @@ const Dashboard: React.FC = () => {
     loading,
     error,
     dateRange,
+    setDateRange,
     getSalesOverview,
     getDailySalesData,
   } = useStatistics();
 
+  const [activeTab, setActiveTab] = useState<TimeTab>('today');
+  const [customRange, setCustomRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
+    dayjs(dateRange.start),
+    dayjs(dateRange.end),
+  ]);
+
   useEffect(() => {
-    loadData();
+    const range = getDateRangeByTab('today');
+    setDateRange(range.start, range.end);
+    setCustomRange([dayjs(range.start), dayjs(range.end)]);
+    void loadData(range.start, range.end);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (start: string, end: string) => {
     try {
       await Promise.all([
-        getSalesOverview({ start: dateRange.start, end: dateRange.end }),
-        getDailySalesData({ start: dateRange.start, end: dateRange.end }),
+        getSalesOverview({ start, end }),
+        getDailySalesData({ start, end }),
       ]);
     } catch (err) {
       message.error('加载数据失败');
     }
+  };
+
+  const handleTabChange = (tab: TimeTab) => {
+    setActiveTab(tab);
+    if (tab === 'custom') {
+      const today = dayjs();
+      const range = { start: today.format('YYYY-MM-DD'), end: today.format('YYYY-MM-DD') };
+      setDateRange(range.start, range.end);
+      setCustomRange([today, today]);
+      void loadData(range.start, range.end);
+    } else {
+      const range = getDateRangeByTab(tab);
+      setDateRange(range.start, range.end);
+      setCustomRange([dayjs(range.start), dayjs(range.end)]);
+      void loadData(range.start, range.end);
+    }
+  };
+
+  const handleCustomRangeChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
+    if (!dates) return;
+    setActiveTab('custom');
+    setCustomRange(dates);
+    const start = dates[0].format('YYYY-MM-DD');
+    const end = dates[1].format('YYYY-MM-DD');
+    setDateRange(start, end);
+    void loadData(start, end);
   };
 
   if (error) {
@@ -71,10 +154,12 @@ const Dashboard: React.FC = () => {
       )
     : 0;
 
+  const currentLabel = tabLabelMap[activeTab];
+
   const summaryCards: SummaryCardItem[] = [
     {
       key: 'revenue',
-      label: '总销售额',
+      label: `${currentLabel}销售额`,
       value: `¥${(salesSummary?.totalRevenue || 0).toLocaleString()}`,
       icon: <DollarOutlined />,
       accent: 'blue',
@@ -82,7 +167,7 @@ const Dashboard: React.FC = () => {
     },
     {
       key: 'orders',
-      label: '订单总数',
+      label: `${currentLabel}订单数`,
       value: `${salesSummary?.totalOrders || 0}`,
       icon: <ShoppingCartOutlined />,
       accent: 'sand',
@@ -90,7 +175,7 @@ const Dashboard: React.FC = () => {
     },
     {
       key: 'customers',
-      label: '客户数',
+      label: `${currentLabel}客户数`,
       value: `${salesSummary?.totalCustomers || 0}`,
       icon: <UserOutlined />,
       accent: 'sky',
@@ -98,7 +183,7 @@ const Dashboard: React.FC = () => {
     },
     {
       key: 'avg',
-      label: '平均客单价',
+      label: `${currentLabel}平均客单价`,
       value: `¥${(salesSummary?.avgOrderValue || 0).toFixed(2)}`,
       icon: <ArrowUpOutlined />,
       accent: 'stone',
@@ -200,6 +285,34 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-page">
       <Spin spinning={loading}>
+        <Row gutter={[18, 18]} style={{ marginBottom: 18 }}>
+          <Col xs={24}>
+            <Card className="dashboard-panel">
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                <Segmented
+                  options={timeTabOptions}
+                  value={activeTab}
+                  onChange={(v) => handleTabChange(v as TimeTab)}
+                  style={{ background: 'transparent' }}
+                />
+                {activeTab === 'custom' && (
+                  <RangePicker
+                    value={customRange}
+                    onChange={handleCustomRangeChange}
+                    allowClear={false}
+                    disabledDate={(current, { from }) => {
+                      if (from) {
+                        return !current.isSame(from, 'year');
+                      }
+                      return false;
+                    }}
+                  />
+                )}
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
         <Row gutter={[18, 18]} className="dashboard-summary-grid">
           {summaryCards.map((card) => (
             <Col xs={24} sm={12} xl={6} key={card.key}>

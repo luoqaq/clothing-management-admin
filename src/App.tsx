@@ -2,15 +2,21 @@ import { RouterProvider } from 'react-router-dom';
 import { Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { ConfigProvider, theme } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
 import { store } from './store';
 import { router } from './routes';
 import 'antd/dist/reset.css';
 import './index.css';
 
+dayjs.locale('zh-cn');
+
 function App() {
   return (
     <Provider store={store}>
       <ConfigProvider
+        locale={zhCN}
         theme={{
           algorithm: theme.defaultAlgorithm,
           token: {

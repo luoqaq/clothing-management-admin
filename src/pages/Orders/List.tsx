@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Descriptions, Form, Grid, Input, Modal, Space, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Descriptions, Form, Grid, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd';
 import { CaretDownOutlined, CaretUpOutlined, CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
 import type { TablePaginationConfig, TableProps } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -310,6 +310,29 @@ const OrderList: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             onPressEnter={handleSearch}
             className="filter-toolbar__search"
+          />
+          <Select
+            placeholder="订单状态"
+            value={queryFilters.status || ''}
+            onChange={(value) => {
+              const nextFilters = {
+                ...queryFilters,
+                status: (value || undefined) as OrderStatus | undefined,
+              };
+              setQueryFilters(nextFilters);
+              void reload({
+                page: 1,
+                pageSize: 10,
+                filters: nextFilters,
+              });
+            }}
+            className="filter-toolbar__select"
+            options={[
+              { label: '全部', value: '' },
+              { label: '已确认', value: 'confirmed' },
+              { label: '已取消', value: 'cancelled' },
+            ]}
+            allowClear
           />
           <Button onClick={handleSearch}>筛选</Button>
           <Button onClick={handleReset}>重置</Button>
