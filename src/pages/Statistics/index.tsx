@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Col, DatePicker, Empty, Row, Space, Spin, Table, Tabs, Typography, message } from 'antd';
+import { Button, Card, Col, DatePicker, Empty, Row, Segmented, Space, Spin, Table, Tabs, Typography, message } from 'antd';
 import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { customersApi } from '../../api/customers';
@@ -10,6 +10,42 @@ import type { CategorySalesData, CostProductRankingItem, Customer, ProductSalesR
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
+
+type TimeTab = 'today' | 'week' | 'month' | 'all' | 'custom';
+
+const timeTabOptions = [
+  { label: '今日', value: 'today' },
+  { label: '本周', value: 'week' },
+  { label: '本月', value: 'month' },
+  { label: '全部', value: 'all' },
+];
+
+function getDateRangeByTab(tab: TimeTab): { start: string; end: string } {
+  const now = dayjs();
+  const todayStr = now.format('YYYY-MM-DD');
+  switch (tab) {
+    case 'today':
+      return { start: todayStr, end: todayStr };
+    case 'week': {
+      const day = now.day();
+      const diff = day === 0 ? -6 : 1 - day;
+      const monday = now.add(diff, 'day');
+      return { start: monday.format('YYYY-MM-DD'), end: todayStr };
+    }
+    case 'month':
+      return {
+        start: now.startOf('month').format('YYYY-MM-DD'),
+        end: todayStr,
+      };
+    case 'all':
+      return {
+        start: '2000-01-01',
+        end: todayStr,
+      };
+    default:
+      return { start: todayStr, end: todayStr };
+  }
+}
 
 const StatisticsPage: React.FC = () => {
   const {
@@ -35,6 +71,7 @@ const StatisticsPage: React.FC = () => {
     getCostProductRanking,
   } = useStatistics();
 
+  const [activeTab, setActiveTab] = useState<TimeTab>('today');
   const [datePickerValue, setDatePickerValue] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
     dayjs(dateRange.start),
     dayjs(dateRange.end),
@@ -71,11 +108,31 @@ const StatisticsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void loadAllData();
+    const range = getDateRangeByTab('today');
+    setDateRange(range.start, range.end);
+    setDatePickerValue([dayjs(range.start), dayjs(range.end)]);
+    void loadAllData(range.start, range.end);
   }, []);
+
+  const handleTabChange = (tab: TimeTab) => {
+    setActiveTab(tab);
+    if (tab === 'custom') {
+      const today = dayjs();
+      const range = { start: today.format('YYYY-MM-DD'), end: today.format('YYYY-MM-DD') };
+      setDateRange(range.start, range.end);
+      setDatePickerValue([today, today]);
+      void loadAllData(range.start, range.end);
+    } else {
+      const range = getDateRangeByTab(tab);
+      setDateRange(range.start, range.end);
+      setDatePickerValue([dayjs(range.start), dayjs(range.end)]);
+      void loadAllData(range.start, range.end);
+    }
+  };
 
   const handleDateChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
     if (!dates) return;
+    setActiveTab('custom');
     const nextStart = dates[0].format('YYYY-MM-DD');
     const nextEnd = dates[1].format('YYYY-MM-DD');
     setDatePickerValue(dates);
@@ -342,6 +399,7 @@ const StatisticsPage: React.FC = () => {
         { key: 'revenue', title: '总销售额', value: `¥${Number(salesSummary?.totalRevenue || 0).toFixed(2)}`, hint: `环比 ${Number(salesSummary?.revenueGrowth || 0).toFixed(1)}%` },
         { key: 'orders', title: '订单数', value: `${salesSummary?.totalOrders || 0}`, hint: `环比 ${Number(salesSummary?.ordersGrowth || 0).toFixed(1)}%` },
         { key: 'avg', title: '客单价', value: `¥${Number(salesSummary?.avgOrderValue || 0).toFixed(2)}`, hint: '总销售额 / 订单数' },
+        { key: 'grossMargin', title: '毛利率', value: `${(Number(salesSummary?.totalRevenue || 0) > 0 ? (Number(salesSummary?.totalGrossProfit || 0) / Number(salesSummary?.totalRevenue || 0)) * 100 : 0).toFixed(1)}%`, hint: '总毛利 / 总销售额' },
         { key: 'customers', title: '客户数', value: `${salesSummary?.totalCustomers || 0}`, hint: `新客 ${salesSummary?.newCustomers || 0} / 老客 ${salesSummary?.returningCustomers || 0}` },
         { key: 'newCustomers', title: '新客户', value: `${salesSummary?.newCustomers || 0}`, hint: '统计期内首单客户' },
         { key: 'returningCustomers', title: '老客户', value: `${salesSummary?.returningCustomers || 0}`, hint: '统计期前已有成交' },
@@ -487,7 +545,7 @@ const StatisticsPage: React.FC = () => {
   return (
     <div className="content-page">
       <Card className="content-panel">
-        <div className="content-panel__header">
+        <div className="content-panel__header" style={{ flexWrap: 'wrap', gap: 12 }}>
           <div>
             <Text className="content-panel__eyebrow">Analysis</Text>
             <Title level={4} className="content-panel__title">
@@ -495,6 +553,12 @@ const StatisticsPage: React.FC = () => {
             </Title>
           </div>
           <Space wrap>
+            <Segmented
+              options={timeTabOptions}
+              value={activeTab}
+              onChange={(v) => handleTabChange(v as TimeTab)}
+              style={{ background: 'transparent' }}
+            />
             <RangePicker value={datePickerValue} onChange={handleDateChange} />
             <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
               刷新
