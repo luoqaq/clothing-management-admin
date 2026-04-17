@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { productsApi } from '../../api/products';
 import type { Product, ProductCategory, Supplier } from '../../types';
 import ImageUploadField from '../../components/ImageUploadField';
 import { SIZE_OPTIONS } from '../../constants/productOptions';
+import { getErrorMessage } from '../../utils/error';
 
 const { Title, Text } = Typography;
 
@@ -85,9 +87,43 @@ const ProductForm: React.FC<ProductFormProps> = ({
     });
   }, [form, product]);
 
+  const validateProductCodeDuplicate = async (rawValue?: string) => {
+    const code = String(rawValue ?? '').trim();
+
+    if (!code) {
+      return false;
+    }
+
+    const response = await productsApi.checkProductCode(code, product?.id);
+
+    if (!response.success) {
+      throw new Error(response.message || '校验款号失败');
+    }
+
+    return response.data?.exists === true;
+  };
+
   const handleFinish = async (values: any) => {
     if (isMainImagesUploading || isDetailImagesUploading) {
       message.error('图片上传中，请等待上传完成后再保存商品');
+      return;
+    }
+
+    try {
+      const isDuplicate = await validateProductCodeDuplicate(values.productCode);
+
+      if (isDuplicate) {
+        form.setFields([
+          {
+            name: 'productCode',
+            errors: ['该款号已存在'],
+          },
+        ]);
+        message.error('该款号已存在');
+        return;
+      }
+    } catch (error) {
+      message.error(getErrorMessage(error, '校验款号失败'));
       return;
     }
 
@@ -181,7 +217,33 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 <Form.Item
                   name="productCode"
                   label="款号"
-                  rules={[{ required: true, message: '请输入款号' }]}
+                  validateTrigger="onBlur"
+                  rules={[
+                    { required: true, message: '请输入款号' },
+                    {
+                      validator: async (_, value) => {
+                        const code = String(value ?? '').trim();
+
+                        if (!code) {
+                          return;
+                        }
+
+                        try {
+                          const isDuplicate = await validateProductCodeDuplicate(code);
+
+                          if (isDuplicate) {
+                            throw new Error('该款号已存在');
+                          }
+                        } catch (error) {
+                          if (error instanceof Error && error.message === '该款号已存在') {
+                            throw error;
+                          }
+
+                          throw new Error(getErrorMessage(error, '校验款号失败'));
+                        }
+                      },
+                    },
+                  ]}
                 >
                   <Input placeholder="例如：TOP001" />
                 </Form.Item>

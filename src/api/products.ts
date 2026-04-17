@@ -92,6 +92,15 @@ export const productsApi = {
     return response;
   },
 
+  checkProductCode: async (code: string, excludeId?: number) => {
+    return api.get<{ exists: boolean }>('/products/check-code', {
+      params: {
+        code,
+        ...(excludeId ? { excludeId } : {}),
+      },
+    });
+  },
+
   // 创建商品
   createProduct: async (data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     const response = await api.post<Product>('/products', data);
