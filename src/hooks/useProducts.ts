@@ -86,7 +86,9 @@ export const useProducts = () => {
       const result = await dispatch(createProduct(product)).unwrap();
       return result;
     } catch (err) {
-      return handleActionError(err, '创建商品失败');
+      const errorMessage = getErrorMessage(err, '创建商品失败');
+      message.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -96,7 +98,9 @@ export const useProducts = () => {
       const result = await dispatch(updateProduct({ id, data: product })).unwrap();
       return result;
     } catch (err) {
-      return handleActionError(err, '更新商品失败');
+      const errorMessage = getErrorMessage(err, '更新商品失败');
+      message.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -228,7 +232,9 @@ export const useProducts = () => {
       const result = await dispatch(bulkCreateProductsAction({ products, createMissingSuppliers })).unwrap();
       return result;
     } catch (err) {
-      return handleActionError(err, '批量导入失败');
+      const errorMessage = getErrorMessage(err, '批量导入失败');
+      message.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 

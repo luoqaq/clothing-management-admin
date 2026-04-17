@@ -158,6 +158,42 @@ function validateDrafts(
   return issues;
 }
 
+function parseDuplicateProductCodesFromError(messageText: string): string[] {
+  const patterns = ['存在重复款号：', '以下款号已存在：'];
+
+  for (const pattern of patterns) {
+    const index = messageText.indexOf(pattern);
+    if (index === -1) {
+      continue;
+    }
+
+    return messageText
+      .slice(index + pattern.length)
+      .split(/[、,，]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function buildDuplicateProductCodeIssues(drafts: ImportDraftProduct[], productCodes: string[]): ImportIssue[] {
+  if (!productCodes.length) {
+    return [];
+  }
+
+  const duplicateCodeSet = new Set(productCodes);
+
+  return drafts
+    .filter((draft) => duplicateCodeSet.has(String(draft.productCode ?? '').trim()))
+    .map((draft) => ({
+      level: 'error' as const,
+      rowKey: draft.rowKey,
+      field: 'productCode',
+      message: `款号 ${draft.productCode} 已存在，请修改后重试`,
+    }));
+}
+
 const ProductImportPage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -190,10 +226,7 @@ const ProductImportPage: React.FC = () => {
   }, []);
 
   const clientIssues = useMemo(() => validateDrafts(drafts, categories, suppliers), [drafts, categories, suppliers]);
-  const mergedIssues = useMemo(
-    () => [...serverIssues.filter((item) => item.level === 'warning'), ...clientIssues],
-    [clientIssues, serverIssues]
-  );
+  const mergedIssues = useMemo(() => [...serverIssues, ...clientIssues], [clientIssues, serverIssues]);
   const errorCount = mergedIssues.filter((item) => item.level === 'error').length;
   const warningCount = mergedIssues.filter((item) => item.level === 'warning').length;
 
@@ -208,6 +241,7 @@ const ProductImportPage: React.FC = () => {
 
   const updateDraft = (rowKey: string, updater: (draft: ImportDraftProduct) => ImportDraftProduct) => {
     setDrafts((current) => current.map((item) => (item.rowKey === rowKey ? updater(item) : item)));
+    setServerIssues((current) => current.filter((item) => item.rowKey !== rowKey));
   };
 
   const addManualDraft = () => {
@@ -366,15 +400,26 @@ const ProductImportPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       setProcessingText('正在批量创建商品，请不要关闭页面...');
+      setServerIssues([]);
       const result = await bulkCreateProducts(drafts, createMissingSuppliers);
-      if (!result) {
-        return;
-      }
 
       setImportResult(result);
       setStep(2);
       void Promise.all([getProducts({ page: 1, pageSize: 10 }), getSuppliers()]);
       message.success(`导入完成，成功 ${result.successCount} 条`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '批量导入失败';
+      const duplicateCodes = parseDuplicateProductCodesFromError(errorMessage);
+
+      if (duplicateCodes.length > 0) {
+        const duplicateIssues = buildDuplicateProductCodeIssues(drafts, duplicateCodes);
+        setServerIssues(duplicateIssues);
+        setExpandedDraftKeys((current) => {
+          const nextKeys = new Set(current);
+          duplicateIssues.forEach((item) => nextKeys.add(item.rowKey));
+          return Array.from(nextKeys);
+        });
+      }
     } finally {
       setIsSubmitting(false);
       setProcessingText('');

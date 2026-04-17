@@ -32,6 +32,16 @@ function formatDecimalInput(value?: string | number | null): string {
   return nextValue.replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
 }
 
+function isDuplicateProductCodeError(messageText: string): boolean {
+  return messageText.includes('款号') && messageText.includes('已存在');
+}
+
+interface FormFinishFailedInfo {
+  errorFields: Array<{
+    errors: string[];
+  }>;
+}
+
 const ProductForm: React.FC<ProductFormProps> = ({
   categories,
   suppliers,
@@ -127,46 +137,61 @@ const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
-    await onSubmit({
-      productCode: String(values.productCode).trim(),
-      name: values.name,
-      description: values.description,
-      categoryId: values.categoryId,
-      supplierId: values.supplierId ?? null,
-      mainImages: Array.isArray(values.mainImages) ? values.mainImages.slice(0, 1) : [],
-      detailImages: Array.isArray(values.detailImages) ? values.detailImages : [],
-      tags: values.tags
-        ? String(values.tags)
-            .split(',')
-            .map((item: string) => item.trim())
-            .filter(Boolean)
-        : [],
-      status: values.status,
-      specifications: values.specifications.map((item: any, index: number) => ({
-        id: item.id ?? product?.specifications[index]?.id ?? 0,
-        productId: product?.id ?? 0,
-        skuCode: buildSkuCode(values.productCode, item.size, item.color),
-        barcode: product?.specifications[index]?.barcode ?? null,
-        color: item.color,
-        size: item.size,
-        salePrice: item.salePrice,
-        costPrice: item.costPrice,
-        stock: item.stock,
-        reservedStock: item.reservedStock ?? 0,
-        availableStock: Math.max((item.stock ?? 0) - (item.reservedStock ?? 0), 0),
-        status: item.status ?? 'active',
-        createdAt: product?.specifications[index]?.createdAt ?? '',
-        updatedAt: product?.specifications[index]?.updatedAt ?? '',
-      })),
-      specCount: product?.specCount ?? 0,
-      totalStock: product?.totalStock ?? 0,
-      reservedStock: product?.reservedStock ?? 0,
-      availableStock: product?.availableStock ?? 0,
-      minPrice: product?.minPrice ?? 0,
-      maxPrice: product?.maxPrice ?? 0,
-      category: product?.category,
-      supplier: product?.supplier,
-    });
+    try {
+      await onSubmit({
+        productCode: String(values.productCode).trim(),
+        name: values.name,
+        description: values.description,
+        categoryId: values.categoryId,
+        supplierId: values.supplierId ?? null,
+        mainImages: Array.isArray(values.mainImages) ? values.mainImages.slice(0, 1) : [],
+        detailImages: Array.isArray(values.detailImages) ? values.detailImages : [],
+        tags: values.tags
+          ? String(values.tags)
+              .split(',')
+              .map((item: string) => item.trim())
+              .filter(Boolean)
+          : [],
+        status: values.status,
+        specifications: values.specifications.map((item: any, index: number) => ({
+          id: item.id ?? product?.specifications[index]?.id ?? 0,
+          productId: product?.id ?? 0,
+          skuCode: buildSkuCode(values.productCode, item.size, item.color),
+          barcode: product?.specifications[index]?.barcode ?? null,
+          color: item.color,
+          size: item.size,
+          salePrice: item.salePrice,
+          costPrice: item.costPrice,
+          stock: item.stock,
+          reservedStock: item.reservedStock ?? 0,
+          availableStock: Math.max((item.stock ?? 0) - (item.reservedStock ?? 0), 0),
+          status: item.status ?? 'active',
+          createdAt: product?.specifications[index]?.createdAt ?? '',
+          updatedAt: product?.specifications[index]?.updatedAt ?? '',
+        })),
+        specCount: product?.specCount ?? 0,
+        totalStock: product?.totalStock ?? 0,
+        reservedStock: product?.reservedStock ?? 0,
+        availableStock: product?.availableStock ?? 0,
+        minPrice: product?.minPrice ?? 0,
+        maxPrice: product?.maxPrice ?? 0,
+        category: product?.category,
+        supplier: product?.supplier,
+      });
+    } catch (error) {
+      const errorMessage = getErrorMessage(error, '保存商品失败');
+
+      if (isDuplicateProductCodeError(errorMessage)) {
+        form.setFields([
+          {
+            name: 'productCode',
+            errors: [errorMessage],
+          },
+        ]);
+      }
+
+      return;
+    }
   };
 
   const handleAddSpecification = (add: (defaultValue?: any, insertIndex?: number) => void) => {
@@ -185,8 +210,21 @@ const ProductForm: React.FC<ProductFormProps> = ({
     });
   };
 
+  const handleFinishFailed = ({ errorFields }: FormFinishFailedInfo) => {
+    const firstError = errorFields.find((field) => field.errors.length > 0)?.errors[0];
+    if (firstError) {
+      message.error(firstError);
+    }
+  };
+
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleFinish}
+      onFinishFailed={handleFinishFailed}
+      className="editor-form"
+    >
       <div className="editor-form__toolbar">
         <Space>
           <Button onClick={onCancel}>取消</Button>
