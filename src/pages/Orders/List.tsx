@@ -271,7 +271,7 @@ const OrderList: React.FC = () => {
 
         <div className="filter-toolbar">
           <Input
-            placeholder="搜索订单号、客户名、电话"
+            placeholder="搜索订单号、客户名、电话、商品名、款号"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onPressEnter={handleSearch}
