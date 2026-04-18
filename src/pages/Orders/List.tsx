@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Descriptions, Form, Grid, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd';
-import { CaretDownOutlined, CaretUpOutlined, CheckOutlined, CloseOutlined, DollarOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
+import { CaretDownOutlined, CaretUpOutlined, CloseOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
 import type { TablePaginationConfig, TableProps } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { Order, OrderFilters, OrderStatus } from '../../types';
@@ -13,12 +13,12 @@ import { touchFriendlySelectProps } from '../../utils/touchSelect';
 const { Title, Text } = Typography;
 
 const orderStatusMap: Record<OrderStatus, { text: string; color: string }> = {
-  pending: { text: '待确认', color: 'gold' },
+  pending: { text: '已确认', color: 'blue' },
   confirmed: { text: '已确认', color: 'blue' },
-  shipped: { text: '已发货', color: 'cyan' },
-  delivered: { text: '已完成', color: 'green' },
+  shipped: { text: '已确认', color: 'blue' },
+  delivered: { text: '已确认', color: 'blue' },
   cancelled: { text: '已取消', color: 'default' },
-  refunded: { text: '已退款', color: 'magenta' },
+  refunded: { text: '已取消', color: 'default' },
 };
 
 const defaultFilters: OrderFilters = {
@@ -36,9 +36,7 @@ const OrderList: React.FC = () => {
     pagination,
     getOrders,
     getOrderById,
-    updateOrderStatus,
     cancelOrder,
-    refundOrder,
     addOrder,
   } = useOrders();
 
@@ -46,11 +44,9 @@ const OrderList: React.FC = () => {
   const [queryFilters, setQueryFilters] = useState<OrderFilters>(defaultFilters);
   const [detailVisible, setDetailVisible] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
-  const [refundVisible, setRefundVisible] = useState(false);
   const [cancelVisible, setCancelVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [refundForm] = Form.useForm();
   const [cancelForm] = Form.useForm();
   const addModalWidth = screens.lg ? 1100 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
   const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
@@ -108,31 +104,10 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const openRefundModal = (order: Order) => {
-    setSelectedOrder(order);
-    refundForm.setFieldsValue({ amount: order.finalAmount, reason: order.refundReason });
-    setRefundVisible(true);
-  };
-
   const openCancelModal = (order: Order) => {
     setSelectedOrder(order);
     cancelForm.setFieldsValue({ reason: order.cancelReason });
     setCancelVisible(true);
-  };
-
-  const submitRefund = async () => {
-    if (!selectedOrder) return;
-    try {
-      const values = await refundForm.validateFields();
-      const result = await refundOrder(selectedOrder.id, values);
-      if (result) {
-        message.success('退款已处理');
-        setRefundVisible(false);
-        void reload();
-      }
-    } catch (err) {
-      message.error(getErrorMessage(err, '退款失败'));
-    }
   };
 
   const submitCancel = async () => {
@@ -264,19 +239,9 @@ const OrderList: React.FC = () => {
           <Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.id)}>
             查看
           </Button>
-          {record.status === 'pending' && (
-            <Button type="text" icon={<CheckOutlined />} onClick={() => void updateOrderStatus(record.id, 'confirmed')}>
-              确认
-            </Button>
-          )}
-          {(record.status === 'pending' || record.status === 'confirmed') && (
+          {record.status !== 'cancelled' && record.status !== 'refunded' && (
             <Button type="text" danger icon={<CloseOutlined />} onClick={() => openCancelModal(record)}>
               取消
-            </Button>
-          )}
-          {record.status === 'confirmed' && record.paymentStatus === 'paid' && (
-            <Button type="text" danger icon={<DollarOutlined />} onClick={() => openRefundModal(record)}>
-              退款
             </Button>
           )}
         </div>
@@ -390,17 +355,6 @@ const OrderList: React.FC = () => {
             />
           </div>
         )}
-      </Modal>
-
-      <Modal open={refundVisible} title="订单退款" onOk={() => void submitRefund()} onCancel={() => setRefundVisible(false)}>
-        <Form form={refundForm} layout="vertical">
-          <Form.Item name="amount" label="退款金额" rules={[{ required: true, message: '请输入退款金额' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="reason" label="退款原因" rules={[{ required: true, message: '请输入退款原因' }]}>
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
       </Modal>
 
       <Modal open={cancelVisible} title="取消订单" onOk={() => void submitCancel()} onCancel={() => setCancelVisible(false)}>
