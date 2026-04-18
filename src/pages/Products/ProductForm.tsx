@@ -91,7 +91,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
         salePrice: item.salePrice,
         costPrice: item.costPrice,
         stock: item.stock,
-        reservedStock: item.reservedStock,
         status: item.status,
       })),
     });
@@ -163,8 +162,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           salePrice: item.salePrice,
           costPrice: item.costPrice,
           stock: item.stock,
-          reservedStock: item.reservedStock ?? 0,
-          availableStock: Math.max((item.stock ?? 0) - (item.reservedStock ?? 0), 0),
+          availableStock: item.stock ?? 0,
           status: item.status ?? 'active',
           createdAt: product?.specifications[index]?.createdAt ?? '',
           updatedAt: product?.specifications[index]?.updatedAt ?? '',
@@ -205,7 +203,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       salePrice: previousSpec?.salePrice,
       costPrice: previousSpec?.costPrice,
       stock: previousSpec?.stock,
-      reservedStock: 0,
       status: previousSpec?.status ?? 'active',
     });
   };
