@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
-import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { CameraOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { productsApi } from '../../api/products';
 import type { Product, ProductCategory, Supplier } from '../../types';
 import ImageUploadField from '../../components/ImageUploadField';
+import SpecImageUpload from '../../components/SpecImageUpload';
 import { SIZE_OPTIONS } from '../../constants/productOptions';
 import { getErrorMessage } from '../../utils/error';
 
@@ -53,6 +54,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [form] = Form.useForm();
   const [isMainImagesUploading, setIsMainImagesUploading] = useState(false);
   const [isDetailImagesUploading, setIsDetailImagesUploading] = useState(false);
+  const [specUploadingMap, setSpecUploadingMap] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (!product) {
@@ -91,6 +93,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         salePrice: item.salePrice,
         costPrice: item.costPrice,
         stock: item.stock,
+        image: item.image ?? null,
         status: item.status,
       })),
     });
@@ -113,9 +116,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   const handleFinish = async (values: any) => {
-    if (isMainImagesUploading || isDetailImagesUploading) {
+    const isAnySpecUploading = Object.values(specUploadingMap).some(Boolean);
+    if (isMainImagesUploading || isDetailImagesUploading || isAnySpecUploading) {
       message.error('图片上传中，请等待上传完成后再保存商品');
       return;
+    }
+
+    const specKeys = new Set<string>();
+    for (const spec of values.specifications) {
+      const key = `${spec.color}/${spec.size}`;
+      if (specKeys.has(key)) {
+        message.error(`规格中存在重复：${spec.color} / ${spec.size}`);
+        return;
+      }
+      specKeys.add(key);
     }
 
     try {
@@ -163,6 +177,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           costPrice: item.costPrice,
           stock: item.stock,
           availableStock: item.stock ?? 0,
+          image: item.image ?? null,
           status: item.status ?? 'active',
           createdAt: product?.specifications[index]?.createdAt ?? '',
           updatedAt: product?.specifications[index]?.updatedAt ?? '',
@@ -203,6 +218,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       salePrice: previousSpec?.salePrice,
       costPrice: previousSpec?.costPrice,
       stock: previousSpec?.stock,
+      image: null,
       status: previousSpec?.status ?? 'active',
     });
   };
@@ -229,7 +245,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             type="primary"
             htmlType="submit"
             loading={loading}
-            disabled={isMainImagesUploading || isDetailImagesUploading}
+            disabled={isMainImagesUploading || isDetailImagesUploading || Object.values(specUploadingMap).some(Boolean)}
           >
             保存商品
           </Button>
@@ -371,14 +387,29 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       <div>
                         <Text className="spec-card__index">规格 {index + 1}</Text>
                       </div>
-                      <Button
-                        danger
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => remove(name)}
-                        disabled={fields.length === 1}
-                      >
-                        删除
-                      </Button>
+                      <div className="spec-card__actions">
+                        <Button
+                          danger
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                          disabled={fields.length === 1}
+                        >
+                          删除
+                        </Button>
+                        <div className="spec-card__image">
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'image']}
+                            noStyle
+                          >
+                            <SpecImageUpload
+                              onUploadingChange={(uploading) => {
+                                setSpecUploadingMap((prev) => ({ ...prev, [index]: uploading }));
+                              }}
+                            />
+                          </Form.Item>
+                        </div>
+                      </div>
                     </div>
                     <Row gutter={[16, 0]}>
                       <Col xs={24}>

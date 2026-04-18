@@ -105,7 +105,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           productName: product.name,
           productCode: product.productCode,
           skuCode: specification.skuCode,
-          image: product.mainImages[0] ?? null,
+          image: specification.image ?? product.mainImages[0] ?? null,
           color: specification.color,
           size: specification.size,
           price: specification.salePrice,
@@ -501,40 +501,29 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           dataSource={specificationRows}
           columns={[
             {
+              title: '图片',
+              key: 'image',
+              width: 80,
+              render: (_, item: CartItem & { categoryName: string }) =>
+                item.image ? (
+                  <Image
+                    src={item.image}
+                    width={40}
+                    height={40}
+                    style={{ objectFit: 'cover', borderRadius: 6 }}
+                    preview={false}
+                  />
+                ) : (
+                  <Text type="secondary">-</Text>
+                ),
+            },
+            {
               title: '商品',
               key: 'productName',
               render: (_, item: CartItem & { categoryName: string }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {item.image ? (
-                    <Image
-                      src={item.image}
-                      width={56}
-                      height={56}
-                      style={{ objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
-                      preview={false}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 8,
-                        background: '#f5f5f5',
-                        color: '#bfbfbf',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 12,
-                        flexShrink: 0,
-                      }}
-                    >
-                      无图
-                    </div>
-                  )}
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600 }}>{item.productName}</div>
-                    <div style={{ color: '#8c8c8c' }}>{item.productCode} · {item.categoryName}</div>
-                  </div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{item.productName}</div>
+                  <div style={{ color: '#8c8c8c' }}>{item.productCode} · {item.categoryName}</div>
                 </div>
               ),
             },

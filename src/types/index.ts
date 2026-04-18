@@ -71,6 +71,7 @@ export interface ProductSpecification {
   availableStock: number;
   cumulativeInboundQuantity?: number;
   cumulativeCostAmount?: number;
+  image?: string | null;
   status: ProductSpecificationStatus;
   createdAt: string;
   updatedAt: string;
@@ -428,7 +429,7 @@ export interface ApiResponse<T = any> {
 }
 
 export type UploadAssetBiz = 'product' | 'brand' | 'avatar';
-export type UploadAssetScene = 'main' | 'detail' | 'logo' | 'avatar';
+export type UploadAssetScene = 'main' | 'detail' | 'spec' | 'logo' | 'avatar';
 
 export interface UploadPolicyRequest {
   biz: UploadAssetBiz;

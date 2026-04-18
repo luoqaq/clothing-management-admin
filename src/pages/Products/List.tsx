@@ -256,7 +256,7 @@ const ProductList: React.FC = () => {
     {
       title: '规格',
       key: 'specifications',
-      minWidth: 220,
+      minWidth: 260,
       render: (_: unknown, record: Product) => {
         if (record.specifications.length === 0) {
           return <Text type="secondary">暂无规格</Text>;
@@ -265,8 +265,36 @@ const ProductList: React.FC = () => {
         return (
           <div>
             {record.specifications.map((item) => (
-              <div key={item.id} style={{ lineHeight: 1.6 }}>
-                {item.color} / {item.size} · 库存 {item.stock}
+              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.6 }}>
+                {item.image ? (
+                  <div style={{ width: 32, height: 32, flexShrink: 0, borderRadius: 4, overflow: 'hidden' }}>
+                    <Image
+                      src={item.image}
+                      width={32}
+                      height={32}
+                      style={{ objectFit: 'cover' }}
+                      preview={{ src: item.image }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 4,
+                      background: '#f5f5f5',
+                      color: '#bfbfbf',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 10,
+                      flexShrink: 0,
+                    }}
+                  >
+                    无图
+                  </div>
+                )}
+                <span>{item.color} / {item.size} · 库存 {item.stock}</span>
               </div>
             ))}
           </div>
@@ -480,6 +508,25 @@ const ProductList: React.FC = () => {
               title={() => '规格明细'}
               dataSource={selectedProduct.specifications}
               columns={[
+                {
+                  title: '图片',
+                  key: 'image',
+                  width: 80,
+                  render: (_, item: ProductSpecification) =>
+                    item.image ? (
+                      <div style={{ width: 40, height: 40, borderRadius: 6, overflow: 'hidden', display: 'inline-block' }}>
+                        <Image
+                          src={item.image}
+                          width={40}
+                          height={40}
+                          style={{ objectFit: 'cover' }}
+                          preview={{ src: item.image }}
+                        />
+                      </div>
+                    ) : (
+                      <Text type="secondary">-</Text>
+                    ),
+                },
                 { title: '规格', key: 'specification', minWidth: 140, render: (_, item: ProductSpecification) => `${item.color} / ${item.size}` },
                 { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode', minWidth: 150 },
                 { title: '售价', dataIndex: 'salePrice', key: 'salePrice', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },

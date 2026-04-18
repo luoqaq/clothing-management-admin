@@ -13,6 +13,10 @@ const SCENE_CONFIG = {
     maxDimension: 2000,
     targetMaxBytes: 700 * 1024,
   },
+  spec: {
+    maxDimension: 800,
+    targetMaxBytes: 200 * 1024,
+  },
 } as const;
 
 type UploadScene = keyof typeof SCENE_CONFIG;
