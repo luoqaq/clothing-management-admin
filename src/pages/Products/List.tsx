@@ -464,7 +464,9 @@ const ProductList: React.FC = () => {
                 <Descriptions.Item label="分类">{selectedProduct.category?.name || '-'}</Descriptions.Item>
                 {isAdmin ? <Descriptions.Item label="供应商">{selectedProduct.supplier?.name || '-'}</Descriptions.Item> : null}
                 <Descriptions.Item label="规格数">{selectedProduct.specCount}</Descriptions.Item>
-                <Descriptions.Item label="总库存">{selectedProduct.totalStock}</Descriptions.Item>
+                <Descriptions.Item label="可售库存">{selectedProduct.availableStock}</Descriptions.Item>
+                <Descriptions.Item label="实际库存">{selectedProduct.totalStock}</Descriptions.Item>
+                <Descriptions.Item label="占用库存">{selectedProduct.reservedStock}</Descriptions.Item>
                 <Descriptions.Item label="售价范围">{`¥${selectedProduct.minPrice.toFixed(2)} - ¥${selectedProduct.maxPrice.toFixed(2)}`}</Descriptions.Item>
                 <Descriptions.Item label="标签">{selectedProduct.tags.join('，') || '-'}</Descriptions.Item>
                 <Descriptions.Item label="描述" span={2}>{selectedProduct.description || '-'}</Descriptions.Item>
@@ -482,9 +484,9 @@ const ProductList: React.FC = () => {
                 { title: '规格编码', dataIndex: 'skuCode', key: 'skuCode', minWidth: 150 },
                 { title: '售价', dataIndex: 'salePrice', key: 'salePrice', minWidth: 100, render: (value: number) => `¥${value.toFixed(2)}` },
                 ...(isAdmin ? [{ title: '成本价', dataIndex: 'costPrice', key: 'costPrice', minWidth: 100, render: (value?: number) => `¥${Number(value || 0).toFixed(2)}` }] : []),
-                { title: '库存', dataIndex: 'stock', key: 'stock', minWidth: 90 },
-                { title: '占用', dataIndex: 'reservedStock', key: 'reservedStock', minWidth: 90 },
                 { title: '可售', dataIndex: 'availableStock', key: 'availableStock', minWidth: 90 },
+                { title: '占用', dataIndex: 'reservedStock', key: 'reservedStock', minWidth: 90 },
+                { title: '实际库存', dataIndex: 'stock', key: 'stock', minWidth: 90 },
                 {
                   title: '操作',
                   key: 'actions',
