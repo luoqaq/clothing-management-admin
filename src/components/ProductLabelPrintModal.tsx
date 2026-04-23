@@ -54,6 +54,27 @@ const layout = {
   },
 } as const;
 
+const smallLayout = {
+  card: {
+    width: 591,
+    height: 354,
+    paddingX: 32,
+    paddingY: 28,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
+  info: {
+    gap: 18,
+    productCodeFontSize: 56,
+    productNameFontSize: 38,
+    productNameLineHeight: 1.16,
+    metaFontSize: 36,
+    metaGap: 18,
+    qrCanvasSize: 216,
+    qrInnerSize: 198,
+  },
+} as const;
+
 function createLabelStyles(): Record<string, CSSProperties> {
   return {
     card: {
@@ -107,6 +128,17 @@ function createLabelStyles(): Record<string, CSSProperties> {
       overflow: 'hidden',
       wordBreak: 'break-word',
     },
+    productCode: {
+      fontSize: layout.info.colorSizeFontSize,
+      fontWeight: 400,
+      color: '#000',
+      lineHeight: 1.2,
+      textAlign: 'center',
+      marginTop: -8,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
     colorSize: {
       display: 'flex',
       justifyContent: 'center',
@@ -157,12 +189,83 @@ function createLabelStyles(): Record<string, CSSProperties> {
       borderRadius: layout.qr.borderRadius,
       boxSizing: 'border-box',
     },
+    smallCard: {
+      background: smallLayout.card.backgroundColor,
+      borderRadius: smallLayout.card.borderRadius,
+      padding: `${smallLayout.card.paddingY}px ${smallLayout.card.paddingX}px`,
+      width: smallLayout.card.width,
+      height: smallLayout.card.height,
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 22,
+      flexShrink: 0,
+      fontFamily: layout.brand.fontFamily,
+      color: '#000',
+    },
+    smallInfo: {
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      gap: smallLayout.info.gap,
+    },
+    smallProductCode: {
+      fontSize: smallLayout.info.productCodeFontSize,
+      fontWeight: 500,
+      lineHeight: 1.1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+    smallProductName: {
+      fontSize: smallLayout.info.productNameFontSize,
+      fontWeight: 500,
+      lineHeight: smallLayout.info.productNameLineHeight,
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical',
+      overflow: 'hidden',
+      wordBreak: 'break-word',
+    },
+    smallMeta: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: smallLayout.info.metaGap,
+      fontSize: smallLayout.info.metaFontSize,
+      fontWeight: 500,
+      lineHeight: 1.1,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+    },
+    smallMetaText: {
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+    smallQrCanvas: {
+      width: smallLayout.info.qrCanvasSize,
+      height: smallLayout.info.qrCanvasSize,
+      background: '#fff',
+      boxSizing: 'border-box',
+      display: 'block',
+      flexShrink: 0,
+    },
+    smallQrPlaceholder: {
+      width: smallLayout.info.qrCanvasSize,
+      height: smallLayout.info.qrCanvasSize,
+      background: layout.qr.placeholderColor,
+      boxSizing: 'border-box',
+      flexShrink: 0,
+    },
   };
 }
 
 const styles = createLabelStyles();
 
-async function exportLabelNode(target: HTMLDivElement) {
+async function exportLabelNode(target: HTMLDivElement, size: { width: number; height: number }) {
   const exportRoot = target.cloneNode(true) as HTMLDivElement;
   exportRoot.style.transform = 'none';
   exportRoot.style.transformOrigin = 'unset';
@@ -205,8 +308,8 @@ async function exportLabelNode(target: HTMLDivElement) {
       cacheBust: true,
       pixelRatio: 2,
       backgroundColor: '#ffffff',
-      width: layout.card.width,
-      height: layout.card.height,
+      width: size.width,
+      height: size.height,
     });
   } finally {
     wrapper.remove();
@@ -242,7 +345,9 @@ export default function ProductLabelPrintModal({
   const [messageApi, contextHolder] = message.useMessage();
   const [readyMap, setReadyMap] = useState<Record<string, boolean>>({});
   const labelRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const smallLabelRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const qrCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
+  const smallQrCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
   useEffect(() => {
     if (!open || labels.length === 0) {
@@ -256,12 +361,22 @@ export default function ProductLabelPrintModal({
     void Promise.all(
       labels.map(async (label) => {
         const canvas = qrCanvasRefs.current[label.barcode];
-        if (!canvas) {
+        const smallCanvas = smallQrCanvasRefs.current[label.barcode];
+        if (!canvas || !smallCanvas) {
           return [label.barcode, false] as const;
         }
 
         await QRCode.toCanvas(canvas, label.barcode, {
           width: layout.qr.innerSize,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#ffffff',
+          },
+        });
+
+        await QRCode.toCanvas(smallCanvas, label.barcode, {
+          width: smallLayout.info.qrInnerSize,
           margin: 1,
           color: {
             dark: '#000000',
@@ -302,7 +417,7 @@ export default function ProductLabelPrintModal({
     [labels, readyMap]
   );
 
-  const handleDownload = async () => {
+  const handleDownload = async (labelType: 'large' | 'small') => {
     if (labels.length === 0) {
       return;
     }
@@ -317,14 +432,18 @@ export default function ProductLabelPrintModal({
       const zip = new JSZip();
 
       for (const label of labels) {
-        const target = labelRefs.current[label.skuId];
+        const target = labelType === 'large' ? labelRefs.current[label.skuId] : smallLabelRefs.current[label.skuId];
         if (!target) {
           continue;
         }
 
-        const dataUrl = await exportLabelNode(target);
+        const size = labelType === 'large'
+          ? { width: layout.card.width, height: layout.card.height }
+          : { width: smallLayout.card.width, height: smallLayout.card.height };
+        const dataUrl = await exportLabelNode(target, size);
+        const suffix = labelType === 'large' ? 'label' : 'small-label';
         zip.file(
-          `${label.productCode}-${label.color}-${label.size}-${label.barcode}.png`,
+          `${label.productCode}-${label.color}-${label.size}-${label.barcode}-${suffix}.png`,
           dataUrlToUint8Array(dataUrl)
         );
       }
@@ -333,7 +452,7 @@ export default function ProductLabelPrintModal({
       const link = document.createElement('a');
       const objectUrl = URL.createObjectURL(blob);
       link.href = objectUrl;
-      link.download = `product-labels-${Date.now()}.zip`;
+      link.download = `${labelType === 'large' ? 'product-labels' : 'product-small-labels'}-${Date.now()}.zip`;
       link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
@@ -341,14 +460,14 @@ export default function ProductLabelPrintModal({
       URL.revokeObjectURL(objectUrl);
     } catch (error) {
       console.error(error);
-      void messageApi.error('导出标签 ZIP 失败，请重试');
+      void messageApi.error(labelType === 'large' ? '导出标签 ZIP 失败，请重试' : '导出小标签 ZIP 失败，请重试');
     } finally {
       setDownloading(false);
     }
   };
 
-  const handleDownloadSingle = async (label: ProductLabelItem) => {
-    const target = labelRefs.current[label.skuId];
+  const handleDownloadSingle = async (label: ProductLabelItem, labelType: 'large' | 'small') => {
+    const target = labelType === 'large' ? labelRefs.current[label.skuId] : smallLabelRefs.current[label.skuId];
     if (!target) {
       void messageApi.warning('当前标签尚未准备好，请稍后再试');
       return;
@@ -361,18 +480,21 @@ export default function ProductLabelPrintModal({
 
     setDownloading(true);
     try {
-      const dataUrl = await exportLabelNode(target);
+      const size = labelType === 'large'
+        ? { width: layout.card.width, height: layout.card.height }
+        : { width: smallLayout.card.width, height: smallLayout.card.height };
+      const dataUrl = await exportLabelNode(target, size);
 
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `${label.productCode}-${label.color}-${label.size}-${label.barcode}.png`;
+      link.download = `${label.productCode}-${label.color}-${label.size}-${label.barcode}-${labelType === 'large' ? 'label' : 'small-label'}.png`;
       link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (error) {
       console.error(error);
-      void messageApi.error('导出标签图片失败，请重试');
+      void messageApi.error(labelType === 'large' ? '导出标签图片失败，请重试' : '导出小标签图片失败，请重试');
     } finally {
       setDownloading(false);
     }
@@ -387,7 +509,10 @@ export default function ProductLabelPrintModal({
       footer={
         <Space>
           <Button onClick={onCancel}>关闭</Button>
-          <Button type='primary' onClick={() => void handleDownload()} disabled={labels.length === 0 || loading || !allQrCodesReady} loading={downloading}>
+          <Button onClick={() => void handleDownload('small')} disabled={labels.length === 0 || loading || !allQrCodesReady} loading={downloading}>
+            下载小标签 ZIP
+          </Button>
+          <Button type='primary' onClick={() => void handleDownload('large')} disabled={labels.length === 0 || loading || !allQrCodesReady} loading={downloading}>
             下载标签 ZIP
           </Button>
         </Space>
@@ -404,62 +529,108 @@ export default function ProductLabelPrintModal({
           >
             {labels.map((label) => (
               <div key={label.skuId} style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0, alignItems: 'center' }}>
-                <div
-                  style={{
-                    width: layout.card.width / 2,
-                    height: layout.card.height / 2,
-                    overflow: 'hidden',
-                    borderRadius: layout.card.borderRadius,
-                    background: layout.card.backgroundColor,
-                  }}
-                >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div
-                    className='label-card'
-                    ref={(node) => {
-                      labelRefs.current[label.skuId] = node;
+                    style={{
+                      width: layout.card.width / 2,
+                      height: layout.card.height / 2,
+                      overflow: 'hidden',
+                      borderRadius: layout.card.borderRadius,
+                      background: layout.card.backgroundColor,
                     }}
-                    style={{ ...styles.card, transform: 'scale(0.5)', transformOrigin: 'top left' }}
                   >
-                  <div className='label-brand' style={styles.brand}>
-                    <div style={styles.brandTitle}>{layout.brand.title}</div>
-                    <div style={styles.brandSubtitle}>{layout.brand.subtitle}</div>
-                  </div>
-
-                  <div className='label-info' style={styles.info}>
-                    <div style={styles.productName}>{label.productName}</div>
-
-                    <div style={styles.colorSize}>
-                      <span style={{ fontWeight: 400 }}>{label.color}</span>
-                      <span style={styles.colorSizeDivider}>|</span>
-                      <span style={{ fontWeight: 400 }}>{label.size}</span>
-                    </div>
-
-                    <div style={styles.priceWrap}>
-                      <span style={styles.priceSymbol}>¥</span>
-                      <span style={styles.priceValue}>{label.salePrice.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className='label-qr-area' style={styles.qrArea}>
-                    <canvas
+                    <div
+                      className='label-card'
                       ref={(node) => {
-                        qrCanvasRefs.current[label.barcode] = node;
+                        labelRefs.current[label.skuId] = node;
                       }}
-                      width={layout.qr.innerSize}
-                      height={layout.qr.innerSize}
-                      style={readyMap[label.barcode] ? styles.qrCanvas : { ...styles.qrCanvas, visibility: 'hidden' }}
-                    />
-                    {!readyMap[label.barcode] ? <div style={{ ...styles.qrPlaceholder, position: 'absolute', pointerEvents: 'none' }} /> : null}
+                      style={{ ...styles.card, transform: 'scale(0.5)', transformOrigin: 'top left' }}
+                    >
+                      <div className='label-brand' style={styles.brand}>
+                        <div style={styles.brandTitle}>{layout.brand.title}</div>
+                        <div style={styles.brandSubtitle}>{layout.brand.subtitle}</div>
+                      </div>
+
+                      <div className='label-info' style={styles.info}>
+                        <div style={styles.productCode}>{label.productCode}</div>
+                        <div style={styles.productName}>{label.productName}</div>
+
+                        <div style={styles.colorSize}>
+                          <span style={{ fontWeight: 400 }}>{label.color}</span>
+                          <span style={styles.colorSizeDivider}>|</span>
+                          <span style={{ fontWeight: 400 }}>{label.size}</span>
+                        </div>
+
+                        <div style={styles.priceWrap}>
+                          <span style={styles.priceSymbol}>¥</span>
+                          <span style={styles.priceValue}>{label.salePrice.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div className='label-qr-area' style={styles.qrArea}>
+                        <canvas
+                          ref={(node) => {
+                            qrCanvasRefs.current[label.barcode] = node;
+                          }}
+                          width={layout.qr.innerSize}
+                          height={layout.qr.innerSize}
+                          style={readyMap[label.barcode] ? styles.qrCanvas : { ...styles.qrCanvas, visibility: 'hidden' }}
+                        />
+                        {!readyMap[label.barcode] ? <div style={{ ...styles.qrPlaceholder, position: 'absolute', pointerEvents: 'none' }} /> : null}
+                      </div>
+                    </div>
                   </div>
+                  <div
+                    style={{
+                      width: smallLayout.card.width / 2,
+                      height: smallLayout.card.height / 2,
+                      overflow: 'hidden',
+                      borderRadius: smallLayout.card.borderRadius,
+                      background: smallLayout.card.backgroundColor,
+                    }}
+                  >
+                    <div
+                      className='small-label-card'
+                      ref={(node) => {
+                        smallLabelRefs.current[label.skuId] = node;
+                      }}
+                      style={{ ...styles.smallCard, transform: 'scale(0.5)', transformOrigin: 'top left' }}
+                    >
+                      <div style={styles.smallInfo}>
+                        <div style={styles.smallProductCode}>{label.productCode}</div>
+                        <div style={styles.smallProductName}>{label.productName}</div>
+                        <div style={styles.smallMeta}>
+                          <span style={styles.smallMetaText}>{label.color}</span>
+                          <span style={styles.colorSizeDivider}>|</span>
+                          <span style={styles.smallMetaText}>{label.size}</span>
+                        </div>
+                      </div>
+                      <canvas
+                        ref={(node) => {
+                          smallQrCanvasRefs.current[label.barcode] = node;
+                        }}
+                        width={smallLayout.info.qrInnerSize}
+                        height={smallLayout.info.qrInnerSize}
+                        style={readyMap[label.barcode] ? styles.smallQrCanvas : { ...styles.smallQrCanvas, visibility: 'hidden' }}
+                      />
+                      {!readyMap[label.barcode] ? <div style={styles.smallQrPlaceholder} /> : null}
+                    </div>
                   </div>
                 </div>
-                <Button
-                  block
-                  onClick={() => void handleDownloadSingle(label)}
-                  disabled={loading || downloading || !readyMap[label.barcode]}
-                >
-                  下载当前标签
-                </Button>
+                <Space.Compact block>
+                  <Button
+                    onClick={() => void handleDownloadSingle(label, 'large')}
+                    disabled={loading || downloading || !readyMap[label.barcode]}
+                  >
+                    下载当前标签
+                  </Button>
+                  <Button
+                    onClick={() => void handleDownloadSingle(label, 'small')}
+                    disabled={loading || downloading || !readyMap[label.barcode]}
+                  >
+                    下载小标签
+                  </Button>
+                </Space.Compact>
               </div>
             ))}
           </div>

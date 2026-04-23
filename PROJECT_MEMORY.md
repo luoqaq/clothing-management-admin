@@ -1,6 +1,6 @@
 # 服装管理后台前端 - 项目记忆
 
-最近更新：2026-04-11
+最近更新：2026-04-19
 
 ## 仓库与环境
 - 路径：`/Users/luo/Project/clothing-management-admin`
@@ -51,12 +51,28 @@
 - 如需在生产机构建前端，曾确认需要显式切到 `/usr/local/node20-bin` 下的 Node 20；若首页再次出现 `500`，优先检查 `dist` 是否存在以及构建时 Node 版本是否正确。
 - 历史上发布曾被生产机 `package-lock.json` 漂移拦截；当前方案是前端使用 `npm ci`，若再遇到发布前工作区脏的问题，先检查锁文件和本地 stash。
 
+## 上线版本记录
+- 当前最新发布版本：`release-20260419.1`
+- 版本递增规则：每次上线前读取本节，按 `release-YYYYMMDD.N` 递增；同一天多次上线递增 `.N`。
+- 上线前说明必须包含：本次版本号、前端 commit、发布范围、是否依赖后端或数据库变更。
+- 上线后记录必须包含：实际发布版本、commit、构建结果、线上验证结果、遗留风险。
+
 ## 已知风险与待关注项
 - `vite build` 仍有大体积 chunk warning，主要集中在 `vendor-antd`，当前不阻塞功能开发，但后续若继续扩展页面需留意包体积。
 - 后台 web 端扫码录单当前复用 `/api/mobile/products/by-code`；若后续后台和移动端语义继续分化，建议抽成通用商品查询能力。
 - 标签下载当前仍是浏览器侧逐张触发；若后续 iPad 出现多文件下载拦截，可考虑改成 ZIP 打包或后端生成。
 
 ## 最近会话摘要
+
+### 会话日期：2026-04-19
+- 变更内容：
+  - 生产执行标准发布入口 `/var/clothing/server/deploy/release.sh all`，发布版本为 `release-20260419.1`，admin 当前线上版本保持在 `fe640c0`。
+  - 发布过程中前端执行 `npm ci` 与 `npm run build` 成功，构建产物已刷新。
+- 验证结果：
+  - 生产巡检通过：`https://clothing.chuchu9.cn/` 返回 `200`，`https://clothing.chuchu9.cn/api/auth/me` 未登录返回 `401`。
+  - Nginx 配置检查通过，DNS 解析到 `101.35.255.39`。
+- 遗留问题或风险：
+  - 发布时 `npm ci` 仍提示依赖审计风险，构建中仍有 `vendor-antd` 大体积 chunk warning；均未阻塞本次上线。
 
 ### 会话日期：2026-04-18
 - 变更内容：
