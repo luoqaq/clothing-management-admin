@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -13,6 +13,7 @@ import {
   Row,
   Select,
   Space,
+  Spin,
   Table,
   Tag,
   Typography,
@@ -62,6 +63,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   const [scanCode, setScanCode] = useState('');
   const [scanLoading, setScanLoading] = useState(false);
   const [lastScannedItem, setLastScannedItem] = useState<CartItem | null>(null);
+  const submittingRef = useRef(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+
+  const submitLoading = loading || localSubmitting;
 
   useEffect(() => {
     void Promise.all([getProducts({ page: 1, pageSize: 100 }), getCategories()]);
@@ -216,45 +221,58 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
   };
 
   const handleFinish = async (values: any) => {
+    if (submittingRef.current) {
+      return;
+    }
+
     if (cartItems.length === 0) {
       message.error('请至少选择一个规格');
       return;
     }
 
-    await onSubmit({
-      customerName: values.customerName ? String(values.customerName).trim() : '',
-      customerPhone: values.customerPhone ? String(values.customerPhone).trim() : '',
-      customerEmail: values.customerEmail ? String(values.customerEmail).trim() : undefined,
-      ageBucketId: values.ageBucketId ? Number(values.ageBucketId) : null,
-      items: cartItems.map((item) => ({
-        id: 0,
-        productId: item.productId,
-        skuId: item.skuId,
-        productName: item.productName,
-        skuCode: item.skuCode,
-        image: item.image ?? null,
-        price: item.price,
-        soldPrice: item.soldPrice,
-        quantity: item.quantity,
-        color: item.color,
-        size: item.size,
-      })),
-      totalAmount,
-      finalAmount,
-      status: 'confirmed',
-      address: {},
-      note: values.note,
-      paymentMethod: values.paymentMethod,
-      paymentStatus: 'paid',
-    });
+    submittingRef.current = true;
+    setLocalSubmitting(true);
+
+    try {
+      await onSubmit({
+        customerName: values.customerName ? String(values.customerName).trim() : '',
+        customerPhone: values.customerPhone ? String(values.customerPhone).trim() : '',
+        customerEmail: values.customerEmail ? String(values.customerEmail).trim() : undefined,
+        ageBucketId: values.ageBucketId ? Number(values.ageBucketId) : null,
+        items: cartItems.map((item) => ({
+          id: 0,
+          productId: item.productId,
+          skuId: item.skuId,
+          productName: item.productName,
+          skuCode: item.skuCode,
+          image: item.image ?? null,
+          price: item.price,
+          soldPrice: item.soldPrice,
+          quantity: item.quantity,
+          color: item.color,
+          size: item.size,
+        })),
+        totalAmount,
+        finalAmount,
+        status: 'confirmed',
+        address: {},
+        note: values.note,
+        paymentMethod: values.paymentMethod,
+        paymentStatus: 'paid',
+      });
+    } finally {
+      submittingRef.current = false;
+      setLocalSubmitting(false);
+    }
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
+    <Spin spinning={submitLoading} tip="正在创建订单..." size="large">
+      <Form form={form} layout="vertical" onFinish={handleFinish} className="editor-form">
       <div className="editor-form__toolbar">
         <Space>
           <Button onClick={onCancel}>取消</Button>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <Button type="primary" htmlType="submit" loading={submitLoading} disabled={submitLoading}>
             创建订单
           </Button>
         </Space>
@@ -554,7 +572,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel, loading = fal
           ]}
         />
       </Modal>
-    </Form>
+      </Form>
+    </Spin>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -64,6 +64,7 @@ const ProductList: React.FC = () => {
   const [labelLoading, setLabelLoading] = useState(false);
   const [productLabels, setProductLabels] = useState<ProductLabelItem[]>([]);
   const [saveLoading, setSaveLoading] = useState(false);
+  const saveLoadingRef = useRef(false);
   const [stockForm] = Form.useForm();
   const formModalWidth = screens.lg ? 1100 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
   const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
@@ -153,6 +154,11 @@ const ProductList: React.FC = () => {
   };
 
   const handleAddSubmit = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (saveLoadingRef.current) {
+      return;
+    }
+
+    saveLoadingRef.current = true;
     setSaveLoading(true);
     try {
       const result = await addProduct(product);
@@ -162,12 +168,18 @@ const ProductList: React.FC = () => {
         void loadProducts();
       }
     } finally {
+      saveLoadingRef.current = false;
       setSaveLoading(false);
     }
   };
 
   const handleEditSubmit = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!selectedProduct) return;
+    if (saveLoadingRef.current) {
+      return;
+    }
+
+    saveLoadingRef.current = true;
     setSaveLoading(true);
     try {
       const result = await editProduct(selectedProduct.id, product);
@@ -178,6 +190,7 @@ const ProductList: React.FC = () => {
         void loadProducts();
       }
     } finally {
+      saveLoadingRef.current = false;
       setSaveLoading(false);
     }
   };

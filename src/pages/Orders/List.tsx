@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Descriptions, Form, Grid, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd';
 import { CaretDownOutlined, CaretUpOutlined, CloseOutlined, EyeOutlined, PlusOutlined, BarcodeOutlined } from '@ant-design/icons';
@@ -47,6 +47,7 @@ const OrderList: React.FC = () => {
   const [cancelVisible, setCancelVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const submitLoadingRef = useRef(false);
   const [cancelForm] = Form.useForm();
   const addModalWidth = screens.lg ? 1100 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
   const detailModalWidth = screens.lg ? 960 : screens.md ? 'calc(100vw - 32px)' : 'calc(100vw - 16px)';
@@ -89,6 +90,11 @@ const OrderList: React.FC = () => {
   };
 
   const handleCreateOrder = async (order: Omit<Order, 'id' | 'orderNo' | 'createdAt' | 'updatedAt'>) => {
+    if (submitLoadingRef.current) {
+      return;
+    }
+
+    submitLoadingRef.current = true;
     setSubmitLoading(true);
     try {
       const result = await addOrder(order);
@@ -100,6 +106,7 @@ const OrderList: React.FC = () => {
     } catch (err) {
       message.error(getErrorMessage(err, '创建订单失败'));
     } finally {
+      submitLoadingRef.current = false;
       setSubmitLoading(false);
     }
   };

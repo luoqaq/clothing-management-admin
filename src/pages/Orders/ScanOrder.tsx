@@ -13,6 +13,7 @@ import {
   Row,
   Select,
   Space,
+  Spin,
   Table,
   Tag,
   Typography,
@@ -66,6 +67,7 @@ const ScanOrderPage: React.FC = () => {
   const [scanLoading, setScanLoading] = useState(false);
   const [ageBuckets, setAgeBuckets] = useState<CustomerAgeBucket[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [lastScanned, setLastScanned] = useState<{ name: string; action: 'added' | 'updated' } | null>(null);
   const [scanMode, setScanMode] = useState<ScanMode>('camera');
 
@@ -233,14 +235,20 @@ const ScanOrderPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (submittingRef.current) {
+      return;
+    }
+
     if (cartItems.length === 0) {
       message.error('请至少添加一个商品');
       return;
     }
 
+    submittingRef.current = true;
+    setSubmitting(true);
+
     try {
       const values = await form.validateFields();
-      setSubmitting(true);
 
       const totalAmount = cartItems.reduce((sum, item) => sum + item.soldPrice * item.quantity, 0);
       const finalAmount = totalAmount;
@@ -283,6 +291,7 @@ const ScanOrderPage: React.FC = () => {
     } catch (err) {
       message.error(getErrorMessage(err, '下单失败'));
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -401,7 +410,8 @@ const ScanOrderPage: React.FC = () => {
   ];
 
   return (
-    <div className="scan-order-page" style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
+    <Spin spinning={submitting} tip="正在创建订单..." size="large">
+      <div className="scan-order-page" style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
       {/* 头部 */}
       <div style={{ marginBottom: 24 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders')}>
@@ -601,6 +611,7 @@ const ScanOrderPage: React.FC = () => {
               type="primary"
               size="large"
               loading={submitting}
+              disabled={submitting}
               onClick={handleSubmit}
               style={{ minWidth: 160, height: 48, fontSize: 16 }}
             >
@@ -609,7 +620,8 @@ const ScanOrderPage: React.FC = () => {
           </Space>
         </div>
       )}
-    </div>
+      </div>
+    </Spin>
   );
 };
 

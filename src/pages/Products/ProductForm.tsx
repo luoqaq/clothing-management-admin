@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Typography, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, Typography, message } from 'antd';
 import { CameraOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { productsApi } from '../../api/products';
 import type { Product, ProductCategory, Supplier } from '../../types';
@@ -55,6 +55,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [isMainImagesUploading, setIsMainImagesUploading] = useState(false);
   const [isDetailImagesUploading, setIsDetailImagesUploading] = useState(false);
   const [specUploadingMap, setSpecUploadingMap] = useState<Record<number, boolean>>({});
+  const submittingRef = useRef(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+
+  const submitLoading = loading || localSubmitting;
 
   useEffect(() => {
     if (!product) {
@@ -116,17 +120,26 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   const handleFinish = async (values: any) => {
+    if (submittingRef.current) {
+      return;
+    }
+
     const isAnySpecUploading = Object.values(specUploadingMap).some(Boolean);
     if (isMainImagesUploading || isDetailImagesUploading || isAnySpecUploading) {
       message.error('图片上传中，请等待上传完成后再保存商品');
       return;
     }
 
+    submittingRef.current = true;
+    setLocalSubmitting(true);
+
     const specKeys = new Set<string>();
     for (const spec of values.specifications) {
       const key = `${spec.color}/${spec.size}`;
       if (specKeys.has(key)) {
         message.error(`规格中存在重复：${spec.color} / ${spec.size}`);
+        submittingRef.current = false;
+        setLocalSubmitting(false);
         return;
       }
       specKeys.add(key);
@@ -143,10 +156,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
           },
         ]);
         message.error('该款号已存在');
+        submittingRef.current = false;
+        setLocalSubmitting(false);
         return;
       }
     } catch (error) {
       message.error(getErrorMessage(error, '校验款号失败'));
+      submittingRef.current = false;
+      setLocalSubmitting(false);
       return;
     }
 
@@ -204,6 +221,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
       }
 
       return;
+    } finally {
+      submittingRef.current = false;
+      setLocalSubmitting(false);
     }
   };
 
@@ -231,21 +251,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={handleFinish}
-      onFinishFailed={handleFinishFailed}
-      className="editor-form"
-    >
+    <Spin spinning={submitLoading} tip="正在保存商品..." size="large">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleFinish}
+        onFinishFailed={handleFinishFailed}
+        className="editor-form"
+      >
       <div className="editor-form__toolbar">
         <Space>
           <Button onClick={onCancel}>取消</Button>
           <Button
             type="primary"
             htmlType="submit"
-            loading={loading}
-            disabled={isMainImagesUploading || isDetailImagesUploading || Object.values(specUploadingMap).some(Boolean)}
+            loading={submitLoading}
+            disabled={submitLoading || isMainImagesUploading || isDetailImagesUploading || Object.values(specUploadingMap).some(Boolean)}
           >
             保存商品
           </Button>
@@ -513,7 +534,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
           <ImageUploadField scene="detail" maxCount={20} onUploadingChange={setIsDetailImagesUploading} />
         </Form.Item>
       </Card>
-    </Form>
+      </Form>
+    </Spin>
   );
 };
 
